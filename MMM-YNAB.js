@@ -3,6 +3,7 @@ Module.register("MMM-YNAB", {
     loading: true,
     error: null,
     currentTransactionIndex: 0, // Track which set of transactions to show
+    lastUpdated: null, // Track when data was last updated
     defaults: {
         token: "",
         budgetId: null, // Optional: specific budget ID to use
@@ -180,6 +181,20 @@ Module.register("MMM-YNAB", {
             html += '<div class="ynab-loading-subtle">Updating...</div>';
         }
 
+        // Add last updated timestamp
+        if (this.lastUpdated) {
+            const formattedDate = this.lastUpdated.toLocaleDateString('en-US', {
+                month: 'numeric',
+                day: '2-digit'
+            });
+            const formattedTime = this.lastUpdated.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: false
+            });
+            html += `<div class="ynab-last-updated">Updated: ${formattedDate} ${formattedTime}</div>`;
+        }
+
         wrapper.innerHTML = html;
         return wrapper;
     },
@@ -192,6 +207,7 @@ Module.register("MMM-YNAB", {
                 this.result = payload;
                 this.loading = false;
                 this.error = null;
+                this.lastUpdated = new Date(); // Set timestamp when data is updated
                 this.updateDom(0);
                 break;
                 
