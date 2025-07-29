@@ -33,7 +33,8 @@ Module.register("MMM-YNAB", {
             return wrapper;
         }
 
-        if (this.loading) {
+        // Only show loading if we have no existing data
+        if (this.loading && (!this.result.items || this.result.items.length === 0)) {
             wrapper.innerHTML = '<div class="ynab-loading">Loading YNAB...</div>';
             return wrapper;
         }
@@ -73,14 +74,7 @@ Module.register("MMM-YNAB", {
                 amount.toFixed(2);
         };
 
-        // Add group summaries first (if enabled)
-        if (this.result.groupSummaries && this.result.groupSummaries.length > 0 && this.config.showGroupSummaries) {
-            this.result.groupSummaries.forEach(group => {
-                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span><span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
-            });
-        }
-
-        // Add individual category balances
+        // Add individual category balances first
         const itemsHtml = this.result.items.map(item => {
             const balance = item.balance / 1000;
             const formattedBalance = this.config.showCurrency ? 
@@ -93,7 +87,20 @@ Module.register("MMM-YNAB", {
         }).join('');
 
         html += itemsHtml;
+
+        // Add group summaries at the bottom (if enabled)
+        if (this.result.groupSummaries && this.result.groupSummaries.length > 0 && this.config.showGroupSummaries) {
+            this.result.groupSummaries.forEach(group => {
+                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span><span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
+            });
+        }
+
         html += '</div>';
+
+        // Add subtle loading indicator if currently loading
+        if (this.loading) {
+            html += '<div class="ynab-loading-subtle">Updating...</div>';
+        }
 
         wrapper.innerHTML = html;
         return wrapper;
