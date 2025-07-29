@@ -83,6 +83,9 @@ module.exports = NodeHelper.create({
             const allCategories = categoryGroups.flatMap(group => group.categories || []);
             const transactions = transactionsResponse.data.transactions || [];
             
+            // Store category groups for spending calculation
+            this.categoryGroups = categoryGroups;
+            
             // Create a map for quick lookup
             const categoryMap = new Map();
             allCategories.forEach(category => {
@@ -132,24 +135,54 @@ module.exports = NodeHelper.create({
         let todaySpending = 0;
         let thisWeekSpending = 0;
         let lastWeekSpending = 0;
+        let uncategorizedSpending = 0;
 
+        // Get category groups to identify bill categories
+        const billGroups = ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
+        
         transactions.forEach(transaction => {
             if (transaction.amount > 0) { // Only count spending (positive amounts)
                 const transactionDate = new Date(transaction.date);
                 
-                // Today's spending
-                if (transactionDate >= today) {
-                    todaySpending += transaction.amount;
+                // Check if this transaction belongs to a bill category
+                let isBillTransaction = false;
+                if (transaction.category_id) {
+                    // Find the category group for this transaction
+                    for (const group of this.categoryGroups || []) {
+                        if (group.categories) {
+                            const category = group.categories.find(cat => cat.id === transaction.category_id);
+                            if (category) {
+                                // Check if this category belongs to a bill group
+                                if (billGroups.includes(group.name)) {
+                                    isBillTransaction = true;
+                                }
+                                break;
+                            }
+                        }
+                    }
                 }
                 
-                // This week's spending
-                if (transactionDate >= startOfWeek) {
-                    thisWeekSpending += transaction.amount;
+                // Only count non-bill transactions
+                if (!isBillTransaction) {
+                    // Today's spending
+                    if (transactionDate >= today) {
+                        todaySpending += transaction.amount;
+                    }
+                    
+                    // This week's spending
+                    if (transactionDate >= startOfWeek) {
+                        thisWeekSpending += transaction.amount;
+                    }
+                    
+                    // Last week's spending
+                    if (transactionDate >= startOfLastWeek && transactionDate < startOfWeek) {
+                        lastWeekSpending += transaction.amount;
+                    }
                 }
                 
-                // Last week's spending
-                if (transactionDate >= startOfLastWeek && transactionDate < startOfWeek) {
-                    lastWeekSpending += transaction.amount;
+                // Track uncategorized transactions separately
+                if (!transaction.category_id) {
+                    uncategorizedSpending += transaction.amount;
                 }
             }
         });
@@ -157,7 +190,8 @@ module.exports = NodeHelper.create({
         return {
             today: todaySpending / 1000, // Convert from millidollars
             thisWeek: thisWeekSpending / 1000,
-            lastWeek: lastWeekSpending / 1000
+            lastWeek: lastWeekSpending / 1000,
+            uncategorized: uncategorizedSpending / 1000
         };
     },
 

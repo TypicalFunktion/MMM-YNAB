@@ -58,9 +58,18 @@ Module.register("MMM-YNAB", {
                     amount.toFixed(2);
             };
 
-            html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance">${formatAmount(spending.today)}</span></div>`;
-            html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance">${formatAmount(spending.thisWeek)}</span></div>`;
-            html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance">${formatAmount(spending.lastWeek)}</span></div>`;
+            if (spending.today > 0) {
+                html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance">${formatAmount(spending.today)}</span></div>`;
+            }
+            if (spending.thisWeek > 0) {
+                html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance">${formatAmount(spending.thisWeek)}</span></div>`;
+            }
+            if (spending.lastWeek > 0) {
+                html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance">${formatAmount(spending.lastWeek)}</span></div>`;
+            }
+            if (spending.uncategorized > 0) {
+                html += `<div class="ynab-row"><span class="ynab-name">Uncategorized</span><span class="ynab-balance">${formatAmount(spending.uncategorized)}</span></div>`;
+            }
             html += '</div>';
         }
 
