@@ -48,15 +48,21 @@ Module.register("MMM-YNAB", {
 
     rotateTransactions: function () {
         if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-            this.currentTransactionIndex = (this.currentTransactionIndex + 1) % Math.max(1, this.result.lastTransactions.length - 2);
+            const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
+            
+            // Increment the index
+            this.currentTransactionIndex = this.currentTransactionIndex + 1;
+            
+            // If we've reached the end, smoothly transition back to the beginning
+            if (this.currentTransactionIndex > maxIndex) {
+                this.currentTransactionIndex = 0;
+            }
             
             // Find the transactions container and animate the scroll
             const container = document.querySelector('.ynab-transactions-container');
             if (container) {
                 const rowHeight = 20; // Height of each transaction row
-                const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
-                const clampedIndex = Math.min(this.currentTransactionIndex, maxIndex);
-                const translateY = -(clampedIndex * rowHeight);
+                const translateY = -(this.currentTransactionIndex * rowHeight);
                 container.style.transform = `translateY(${translateY}px)`;
             }
         }
@@ -106,7 +112,10 @@ Module.register("MMM-YNAB", {
             // Add recent transactions as sub-list
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 html += '<div class="ynab-subsection">';
-                html += '<div class="ynab-subsection-title">Recent</div>';
+                html += '<div class="ynab-subsection-title">Recent 10</div>';
+                
+                // Create a fixed wrapper container
+                html += '<div class="ynab-transactions-wrapper">';
                 
                 // Create a container for smooth scrolling animation
                 const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
@@ -124,6 +133,7 @@ Module.register("MMM-YNAB", {
                     html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${formattedDate} - ${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
                 });
                 
+                html += '</div>';
                 html += '</div>';
                 html += '</div>';
             }

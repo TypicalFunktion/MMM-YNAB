@@ -29,6 +29,8 @@
     padding-left: 10px;
     border-left: 2px solid rgba(255, 255, 255, 0.1);
     position: relative;
+    overflow: visible;
+    min-height: 80px; /* Ensure consistent height */
 }
 
 .module.MMM-YNAB .ynab-subsection-title {
@@ -69,11 +71,21 @@
     font-weight: bold;
 }
 
-.module.MMM-YNAB .ynab-transactions-container {
-    transition: transform 1s ease-in-out;
-    height: 60px; /* Height for exactly 3 transactions (3 * 20px) */
+.module.MMM-YNAB .ynab-transactions-wrapper {
+    height: 60px; /* Fixed height for exactly 3 transactions */
     overflow: hidden;
     position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+.module.MMM-YNAB .ynab-transactions-container {
+    transition: transform 1s ease-in-out;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
 }
 
 .module.MMM-YNAB .ynab-row.ynab-sub {
