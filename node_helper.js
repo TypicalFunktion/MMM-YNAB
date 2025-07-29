@@ -87,7 +87,21 @@ module.exports = NodeHelper.create({
             })
             .catch(error => {
                 console.error("MMM-YNAB: Error fetching budgets:", error);
-                this.handleError(error, "Failed to fetch budgets");
+                
+                let errorMessage = "Failed to fetch budgets";
+                if (error && error.response) {
+                    if (error.response.status === 401) {
+                        errorMessage = "Invalid YNAB token - please check your API token";
+                    } else if (error.response.status === 403) {
+                        errorMessage = "Access denied - check your YNAB token permissions";
+                    } else {
+                        errorMessage = `YNAB API error (${error.response.status}): ${error.response.data?.error?.detail || error.response.statusText}`;
+                    }
+                } else if (error && error.message) {
+                    errorMessage = error.message;
+                }
+                
+                this.handleError(error, errorMessage);
             });
     },
 
@@ -177,7 +191,28 @@ module.exports = NodeHelper.create({
         })
         .catch(error => {
             console.error("MMM-YNAB: Error in updateBudget:", error);
-            this.handleError(error, "Failed to fetch YNAB data");
+            
+            let errorMessage = "Failed to fetch YNAB data";
+            if (error && error.response) {
+                // YNAB API error
+                if (error.response.status === 401) {
+                    errorMessage = "Invalid YNAB token - please check your API token";
+                } else if (error.response.status === 403) {
+                    errorMessage = "Access denied - check your YNAB token permissions";
+                } else if (error.response.status === 404) {
+                    errorMessage = "Budget not found - check your budget ID";
+                } else if (error.response.status === 429) {
+                    errorMessage = "Rate limit exceeded - please wait before retrying";
+                } else {
+                    errorMessage = `YNAB API error (${error.response.status}): ${error.response.data?.error?.detail || error.response.statusText}`;
+                }
+            } else if (error && error.message) {
+                errorMessage = `Network error: ${error.message}`;
+            } else if (error) {
+                errorMessage = `Unknown error: ${JSON.stringify(error)}`;
+            }
+            
+            this.handleError(error, errorMessage);
         });
     },
 
@@ -384,7 +419,19 @@ module.exports = NodeHelper.create({
 
     handleError: function (error, context) {
         console.error(`MMM-YNAB ${context}:`, error);
-        this.sendError(`${context}: ${error.message}`);
+        
+        let errorMessage = context;
+        if (error) {
+            if (error.message) {
+                errorMessage = `${context}: ${error.message}`;
+            } else if (typeof error === 'string') {
+                errorMessage = `${context}: ${error}`;
+            } else {
+                errorMessage = `${context}: ${JSON.stringify(error)}`;
+            }
+        }
+        
+        this.sendError(errorMessage);
     },
 
     sendError: function (message) {
