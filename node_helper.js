@@ -190,7 +190,10 @@ module.exports = NodeHelper.create({
                 
                 // Track uncategorized transactions separately
                 if (!transaction.category_id) {
-                    uncategorizedSpending += transaction.amount;
+                    // Only count uncategorized spending (positive amounts), not deposits or transfers
+                    if (transaction.amount > 0) {
+                        uncategorizedSpending += transaction.amount;
+                    }
                 }
             }
         });
