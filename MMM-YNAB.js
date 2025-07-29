@@ -24,10 +24,13 @@ Module.register("MMM-YNAB", {
         this.loading = true;
         this.error = null;
         this.currentTransactionIndex = 0;
+        this.lastUpdated = null;
         this.sendSocketNotification('YNAB_SET_CONFIG', this.config);
         
         // Start transaction rotation timer
         this.startTransactionRotation();
+        
+        console.log("MMM-YNAB: Frontend started, waiting for data...");
     },
 
     stop: function () {
@@ -82,7 +85,7 @@ Module.register("MMM-YNAB", {
 
         // Only show loading if we have no existing data
         if (this.loading && (!this.result.items || this.result.items.length === 0)) {
-            wrapper.innerHTML = '<div class="ynab-loading">Loading YNAB...</div>';
+            wrapper.innerHTML = '<div class="ynab-loading">Loading YNAB data...</div>';
             return wrapper;
         }
 

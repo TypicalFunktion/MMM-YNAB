@@ -52,31 +52,43 @@ module.exports = NodeHelper.create({
     },
 
     initializeBudget: function () {
+        console.log("MMM-YNAB: Starting budget initialization...");
+        
         if (!this.config.token) {
+            console.log("MMM-YNAB: No token provided");
             this.sendError("YNAB token is required");
             return;
         }
 
+        console.log("MMM-YNAB: Creating YNAB API instance...");
         const ynabAPI = new ynab.API(this.config.token);
 
         if (this.config.budgetId) {
+            console.log(`MMM-YNAB: Using provided budget ID: ${this.config.budgetId}`);
             ynabBudgetId = this.config.budgetId;
             this.updateBudget();
             this.setInterval();
             return;
         }
 
+        console.log("MMM-YNAB: No budget ID provided, fetching first available budget...");
         // Get first budget if no specific budget ID provided
         ynabAPI.budgets.getBudgets()
             .then(budgetsResponse => {
+                console.log(`MMM-YNAB: Found ${budgetsResponse.data.budgets.length} budgets`);
+                
                 if (!budgetsResponse.data.budgets || budgetsResponse.data.budgets.length === 0) {
                     throw new Error("No budgets found in YNAB account");
                 }
+                
                 ynabBudgetId = budgetsResponse.data.budgets[0].id;
+                console.log(`MMM-YNAB: Using first budget: ${ynabBudgetId}`);
+                
                 this.updateBudget();
                 this.setInterval();
             })
             .catch(error => {
+                console.error("MMM-YNAB: Error fetching budgets:", error);
                 this.handleError(error, "Failed to fetch budgets");
             });
     },
@@ -93,16 +105,21 @@ module.exports = NodeHelper.create({
     },
 
     updateBudget: function () {
+        console.log("MMM-YNAB: Starting updateBudget...");
+        
         if (!ynabBudgetId) {
+            console.log("MMM-YNAB: No budget ID available");
             this.sendError("No budget ID available");
             return;
         }
 
         if (!this.config.token) {
+            console.log("MMM-YNAB: No token available");
             this.sendError("YNAB token is required");
             return;
         }
 
+        console.log("MMM-YNAB: Making API calls to YNAB...");
         const ynabAPI = new ynab.API(this.config.token);
 
         Promise.all([
@@ -110,8 +127,11 @@ module.exports = NodeHelper.create({
             ynabAPI.transactions.getTransactions(ynabBudgetId)
         ])
         .then(([categoriesResponse, transactionsResponse]) => {
+            console.log("MMM-YNAB: API calls successful, processing data...");
             const categories = categoriesResponse.data.category_groups;
             const transactions = transactionsResponse.data.transactions;
+            
+            console.log(`MMM-YNAB: Found ${categories.length} category groups and ${transactions.length} transactions`);
             
             // Store category groups for use in filtering
             this.categoryGroups = categories;
@@ -120,24 +140,32 @@ module.exports = NodeHelper.create({
             const allCategories = categories.flatMap(group => group.categories);
             this.categories = allCategories;
             
+            console.log(`MMM-YNAB: Total categories available: ${allCategories.length}`);
+            
             // Filter categories based on config
             const filteredCategories = allCategories.filter(category => {
                 return this.config.categories.includes(category.name);
             });
+
+            console.log(`MMM-YNAB: Filtered to ${filteredCategories.length} categories`);
 
             if (filteredCategories.length === 0) {
                 console.log("MMM-YNAB: No matching categories found. Available categories:", allCategories.map(c => c.name));
             }
 
             // Calculate spending data
+            console.log("MMM-YNAB: Calculating spending data...");
             const spendingData = this.calculateSpending(transactions);
             
             // Calculate group summaries
+            console.log("MMM-YNAB: Calculating group summaries...");
             const groupSummaries = this.calculateGroupSummaries(categories);
             
             // Get last 10 transactions
+            console.log("MMM-YNAB: Getting recent transactions...");
             const lastTransactions = this.getLastTransactions(transactions, 10);
 
+            console.log("MMM-YNAB: Sending data to frontend...");
             self.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,
                 spending: spendingData,
@@ -146,8 +174,11 @@ module.exports = NodeHelper.create({
                 loading: false,
                 error: null
             });
+            
+            console.log("MMM-YNAB: Update complete!");
         })
         .catch(error => {
+            console.error("MMM-YNAB: Error in updateBudget:", error);
             this.handleError(error, "Failed to fetch YNAB data");
         });
     },
