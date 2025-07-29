@@ -28,7 +28,6 @@
     margin-top: 10px;
     padding-left: 10px;
     border-left: 2px solid rgba(255, 255, 255, 0.1);
-    overflow: hidden;
     position: relative;
 }
 
@@ -74,6 +73,7 @@
     transition: transform 1s ease-in-out;
     height: 60px; /* Height for exactly 3 transactions (3 * 20px) */
     overflow: hidden;
+    position: relative;
 }
 
 .module.MMM-YNAB .ynab-row.ynab-sub {
