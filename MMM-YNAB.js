@@ -75,7 +75,8 @@ Module.register("MMM-YNAB", {
         };
 
         // Add individual category balances first
-        const itemsHtml = this.result.items.map(item => {
+        const sortedItems = this.result.items.sort((a, b) => a.name.localeCompare(b.name));
+        const itemsHtml = sortedItems.map(item => {
             const balance = item.balance / 1000;
             const formattedBalance = this.config.showCurrency ? 
                 `$${balance.toFixed(2)}` : 

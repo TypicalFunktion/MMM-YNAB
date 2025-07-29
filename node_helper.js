@@ -195,8 +195,8 @@ module.exports = NodeHelper.create({
             }
         });
         
-        // Sort by total available amount (highest first)
-        summaries.sort((a, b) => b.totalAvailable - a.totalAvailable);
+        // Sort alphabetically by group name
+        summaries.sort((a, b) => a.name.localeCompare(b.name));
         
         return summaries;
     },
