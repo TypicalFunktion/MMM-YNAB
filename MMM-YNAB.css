@@ -5,7 +5,7 @@
  */
 
 .module.MMM-YNAB .ynab-section {
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Reduced from 15px */
 }
 
 .module.MMM-YNAB .ynab-section:last-child {
@@ -18,19 +18,19 @@
     color: #888;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 5px;
-    padding: 2px 0;
+    margin-bottom: 3px; /* Reduced from 5px */
+    padding: 1px 0; /* Reduced from 2px */
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     text-align: left;
 }
 
 .module.MMM-YNAB .ynab-subsection {
-    margin-top: 10px;
+    margin-top: 6px; /* Reduced from 10px */
     padding-left: 10px;
     border-left: 2px solid rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: visible;
-    min-height: 80px; /* Ensure consistent height */
+    min-height: 70px; /* Reduced from 80px */
 }
 
 .module.MMM-YNAB .ynab-subsection-title {
@@ -39,7 +39,7 @@
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 2px; /* Reduced from default */
+    margin-bottom: 1px; /* Reduced from 2px */
     padding: 1px 0;
     text-align: left;
 }
@@ -48,7 +48,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2px 0;
+    padding: 1px 0; /* Reduced from 2px */
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -60,7 +60,7 @@
     font-weight: bold;
     background-color: rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 2px;
+    margin-bottom: 1px; /* Reduced from 2px */
 }
 
 .module.MMM-YNAB .ynab-row.ynab-group .ynab-name {
@@ -72,7 +72,7 @@
 }
 
 .module.MMM-YNAB .ynab-transactions-wrapper {
-    height: 63px; /* Exactly 3 rows × 21px each */
+    height: 60px; /* Reduced from 63px */
     overflow: hidden;
     position: relative;
     margin: 0;
@@ -91,7 +91,7 @@
 .module.MMM-YNAB .ynab-row.ynab-sub {
     font-size: 0.8em;
     padding: 1px 0;
-    height: 21px; /* Exactly 21px per row (63px ÷ 3) */
+    height: 20px; /* Reduced from 21px (60px ÷ 3) */
     display: flex;
     align-items: center;
 }
@@ -134,8 +134,8 @@
     color: #666;
     font-size: 0.8em;
     font-style: italic;
-    padding: 5px 0;
-    margin-top: 5px;
+    padding: 3px 0; /* Reduced from 5px */
+    margin-top: 3px; /* Reduced from 5px */
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -143,8 +143,8 @@
     text-align: right;
     color: var(--color-text-dimmed);
     font-size: 0.4em;
-    padding: 3px 0;
-    margin-top: 5px;
+    padding: 2px 0; /* Reduced from 3px */
+    margin-top: 3px; /* Reduced from 5px */
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
