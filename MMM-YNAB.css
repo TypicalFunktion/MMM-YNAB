@@ -72,7 +72,7 @@
 }
 
 .module.MMM-YNAB .ynab-transactions-wrapper {
-    height: 65px; /* Increased from 60px to prevent text cutoff */
+    height: 63px; /* Exactly 3 rows × 21px each */
     overflow: hidden;
     position: relative;
     margin: 0;
@@ -91,7 +91,7 @@
 .module.MMM-YNAB .ynab-row.ynab-sub {
     font-size: 0.8em;
     padding: 1px 0;
-    height: 21.67px; /* Updated to match new container height */
+    height: 21px; /* Exactly 21px per row (63px ÷ 3) */
     display: flex;
     align-items: center;
 }
