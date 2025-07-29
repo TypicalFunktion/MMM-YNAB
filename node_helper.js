@@ -144,7 +144,7 @@ module.exports = NodeHelper.create({
         const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
         
         transactions.forEach(transaction => {
-            if (transaction.amount > 0) { // Only count spending (positive amounts)
+            if (transaction.amount < 0) { // Only count spending (negative amounts)
                 const transactionDate = new Date(transaction.date);
                 
                 // Check if this transaction belongs to an excluded category group
@@ -177,17 +177,17 @@ module.exports = NodeHelper.create({
                 if (!isExcludedGroupTransaction && !isExcludedCategory) {
                     // Today's spending
                     if (transactionDate >= today) {
-                        todaySpending += transaction.amount;
+                        todaySpending += Math.abs(transaction.amount);
                     }
                     
                     // This week's spending
                     if (transactionDate >= startOfWeek) {
-                        thisWeekSpending += transaction.amount;
+                        thisWeekSpending += Math.abs(transaction.amount);
                     }
                     
                     // Last week's spending
                     if (transactionDate >= startOfLastWeek && transactionDate < startOfWeek) {
-                        lastWeekSpending += transaction.amount;
+                        lastWeekSpending += Math.abs(transaction.amount);
                     }
                 }
             }
@@ -203,13 +203,13 @@ module.exports = NodeHelper.create({
     getLastTransactions: function (transactions, count) {
         // Filter out transfers and get only spending transactions
         const spendingTransactions = transactions.filter(transaction => {
-            // Only include positive amounts (spending)
-            if (transaction.amount <= 0) return false;
+            // Only include negative amounts (spending) - exclude positive amounts (income)
+            if (transaction.amount >= 0) return false;
             
             // Exclude transfers
             if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false;
             
-            // Exclude income-related transactions
+            // Exclude income-related transactions (positive amounts that might slip through)
             const isIncome = (transaction.payee_name && (
                 transaction.payee_name.toLowerCase().includes('deposit') ||
                 transaction.payee_name.toLowerCase().includes('direct deposit') ||
@@ -293,7 +293,7 @@ module.exports = NodeHelper.create({
         // Format the transactions
         return sortedTransactions.map(transaction => ({
             payee: transaction.payee_name || 'Unknown',
-            amount: transaction.amount / 1000, // Convert from millidollars
+            amount: Math.abs(transaction.amount) / 1000, // Convert from millidollars and make positive for display
             date: transaction.date
         }));
     },
