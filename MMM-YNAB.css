@@ -72,6 +72,8 @@
 
 .module.MMM-YNAB .ynab-transactions-container {
     transition: transform 1s ease-in-out;
+    height: 60px; /* Height for exactly 3 transactions (3 * 20px) */
+    overflow: hidden;
 }
 
 .module.MMM-YNAB .ynab-row.ynab-sub {
