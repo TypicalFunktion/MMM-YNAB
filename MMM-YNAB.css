@@ -21,6 +21,7 @@
     margin-bottom: 5px;
     padding: 2px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: left;
 }
 
 .module.MMM-YNAB .ynab-subsection {
@@ -31,12 +32,13 @@
 
 .module.MMM-YNAB .ynab-subsection-title {
     font-weight: bold;
-    font-size: 0.8em;
+    font-size: 0.75em;
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 3px;
     padding: 1px 0;
+    text-align: left;
 }
 
 .module.MMM-YNAB .ynab-row {
@@ -67,7 +69,7 @@
 }
 
 .module.MMM-YNAB .ynab-row.ynab-sub {
-    font-size: 0.9em;
+    font-size: 0.8em;
     padding: 1px 0;
 }
 
