@@ -109,10 +109,14 @@ module.exports = NodeHelper.create({
             // Calculate spending for different time periods
             const spendingData = this.calculateSpending(transactions);
 
+            // Get last 3 transactions
+            const lastTransactions = this.getLastTransactions(transactions, 3);
+
             self.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,
                 spending: spendingData,
                 groupSummaries: groupSummaries,
+                lastTransactions: lastTransactions,
                 totalCategories: allCategories.length,
                 matchedCategories: filteredCategories.length
             });
@@ -135,7 +139,6 @@ module.exports = NodeHelper.create({
         let todaySpending = 0;
         let thisWeekSpending = 0;
         let lastWeekSpending = 0;
-        let uncategorizedSpending = 0;
 
         // Get excluded groups from config, with fallback to common bill groups
         const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
@@ -187,63 +190,64 @@ module.exports = NodeHelper.create({
                         lastWeekSpending += transaction.amount;
                     }
                 }
-                
-                // Track uncategorized transactions separately
-                if (!transaction.category_id) {
-                    // Only count uncategorized spending (positive amounts), not deposits or transfers
-                    if (transaction.amount > 0) {
-                        // Additional checks to exclude transfers and deposits
-                        const isTransfer = transaction.transfer_account_id || 
-                                         transaction.transfer_transaction_id ||
-                                         (transaction.payee_name && transaction.payee_name.toLowerCase().includes('transfer')) ||
-                                         (transaction.memo && transaction.memo.toLowerCase().includes('transfer'));
-                        
-                        const isDeposit = transaction.amount < 0 || 
-                                        (transaction.payee_name && (
-                                            transaction.payee_name.toLowerCase().includes('deposit') ||
-                                            transaction.payee_name.toLowerCase().includes('direct deposit') ||
-                                            transaction.payee_name.toLowerCase().includes('payroll') ||
-                                            transaction.payee_name.toLowerCase().includes('income') ||
-                                            transaction.payee_name.toLowerCase().includes('salary') ||
-                                            transaction.payee_name.toLowerCase().includes('paycheck')
-                                        )) ||
-                                        (transaction.memo && (
-                                            transaction.memo.toLowerCase().includes('deposit') ||
-                                            transaction.memo.toLowerCase().includes('income') ||
-                                            transaction.memo.toLowerCase().includes('salary') ||
-                                            transaction.memo.toLowerCase().includes('paycheck')
-                                        ));
-                        
-                        // Only count if it's not a transfer and not a deposit
-                        if (!isTransfer && !isDeposit) {
-                            uncategorizedSpending += transaction.amount;
-                            console.log("MMM-YNAB: Counting uncategorized transaction:", {
-                                date: transaction.date,
-                                amount: transaction.amount / 1000,
-                                payee: transaction.payee_name,
-                                memo: transaction.memo
-                            });
-                        } else {
-                            console.log("MMM-YNAB: Excluding uncategorized transaction:", {
-                                date: transaction.date,
-                                amount: transaction.amount / 1000,
-                                payee: transaction.payee_name,
-                                memo: transaction.memo,
-                                isTransfer,
-                                isDeposit
-                            });
-                        }
-                    }
-                }
             }
         });
 
         return {
             today: todaySpending / 1000, // Convert from millidollars
             thisWeek: thisWeekSpending / 1000,
-            lastWeek: lastWeekSpending / 1000,
-            uncategorized: uncategorizedSpending / 1000
+            lastWeek: lastWeekSpending / 1000
         };
+    },
+
+    getLastTransactions: function (transactions, count) {
+        // Filter out transfers and get only spending transactions
+        const spendingTransactions = transactions.filter(transaction => {
+            // Only include positive amounts (spending)
+            if (transaction.amount <= 0) return false;
+            
+            // Exclude transfers
+            if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false;
+            
+            // Exclude transactions from excluded groups
+            const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
+            if (transaction.category_id) {
+                for (const group of this.categoryGroups || []) {
+                    if (group.categories) {
+                        const category = group.categories.find(cat => cat.id === transaction.category_id);
+                        if (category && excludedGroups.includes(group.name)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            // Exclude specific categories
+            if (config.excludedCategories && transaction.category_id) {
+                for (const group of this.categoryGroups || []) {
+                    if (group.categories) {
+                        const category = group.categories.find(cat => cat.id === transaction.category_id);
+                        if (category && config.excludedCategories.includes(category.name)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            return true;
+        });
+        
+        // Sort by date (most recent first) and take the last 'count' transactions
+        const sortedTransactions = spendingTransactions
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, count);
+        
+        // Format the transactions
+        return sortedTransactions.map(transaction => ({
+            payee: transaction.payee_name || 'Unknown',
+            amount: transaction.amount / 1000, // Convert from millidollars
+            date: transaction.date
+        }));
     },
 
     calculateGroupSummaries: function (categoryGroups) {
