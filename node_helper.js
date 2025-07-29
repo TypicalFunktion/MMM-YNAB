@@ -184,8 +184,9 @@ module.exports = NodeHelper.create({
     },
 
     calculateSpending: function (transactions) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
         const startOfLastWeek = new Date(startOfWeek);
@@ -198,14 +199,14 @@ module.exports = NodeHelper.create({
         let lastWeekSpending = 0;
 
         // Get excluded groups from config, with fallback to common bill groups
-        const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
+        const excludedGroups = this.config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
         
         transactions.forEach(transaction => {
             if (transaction.amount < 0) { // Only count spending (negative amounts)
                 const transactionDate = new Date(transaction.date);
                 
                 // Check if we should exclude uncleared transactions
-                if (!config.showUncleared && !transaction.cleared) {
+                if (!this.config.showUncleared && !transaction.cleared) {
                     return; // Skip uncleared transactions
                 }
                 
@@ -226,7 +227,7 @@ module.exports = NodeHelper.create({
                                     isExcludedGroupTransaction = true;
                                 }
                                 // Check if this category is in the excluded list
-                                if (config.excludedCategories && config.excludedCategories.includes(category.name)) {
+                                if (this.config.excludedCategories && this.config.excludedCategories.includes(category.name)) {
                                     isExcludedCategory = true;
                                 }
                                 break;
@@ -264,17 +265,16 @@ module.exports = NodeHelper.create({
 
     getLastTransactions: function (transactions, count) {
         const self = this;
-        const config = this.config;
         
         console.log("Filtering recent transactions with config:", {
-            recentExcludedCategories: config.recentExcludedCategories,
-            recentExcludedGroups: config.recentExcludedGroups
+            recentExcludedCategories: this.config.recentExcludedCategories,
+            recentExcludedGroups: this.config.recentExcludedGroups
         });
 
         const spendingTransactions = transactions.filter(transaction => {
             if (transaction.amount >= 0) return false; // Exclude positive amounts (income)
             if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false; // Exclude transfers
-            if (!config.showUncleared && !transaction.cleared) { return false; } // Exclude uncleared
+            if (!this.config.showUncleared && !transaction.cleared) { return false; } // Exclude uncleared
             
             // Check for income-related keywords in payee or memo
             const payeeLower = (transaction.payee_name || '').toLowerCase();
@@ -303,13 +303,13 @@ module.exports = NodeHelper.create({
 
             // Check if transaction belongs to excluded groups for recent transactions
             let isExcludedGroupTransaction = false;
-            if (config.recentExcludedGroups && config.recentExcludedGroups.length > 0) {
+            if (this.config.recentExcludedGroups && this.config.recentExcludedGroups.length > 0) {
                 const categoryId = transaction.category_id;
                 if (categoryId) {
                     const category = this.categories.find(cat => cat.id === categoryId);
                     if (category) {
                         const categoryGroup = this.categoryGroups.find(group => group.id === category.category_group_id);
-                        if (categoryGroup && config.recentExcludedGroups.includes(categoryGroup.name)) {
+                        if (categoryGroup && this.config.recentExcludedGroups.includes(categoryGroup.name)) {
                             console.log("Excluding recent transaction from excluded group:", categoryGroup.name, transaction.payee_name);
                             isExcludedGroupTransaction = true;
                         }
@@ -319,11 +319,11 @@ module.exports = NodeHelper.create({
 
             // Check if transaction belongs to excluded categories for recent transactions
             let isExcludedCategory = false;
-            if (config.recentExcludedCategories && config.recentExcludedCategories.length > 0) {
+            if (this.config.recentExcludedCategories && this.config.recentExcludedCategories.length > 0) {
                 const categoryId = transaction.category_id;
                 if (categoryId) {
                     const category = this.categories.find(cat => cat.id === categoryId);
-                    if (category && config.recentExcludedCategories.includes(category.name)) {
+                    if (category && this.config.recentExcludedCategories.includes(category.name)) {
                         console.log("Excluding recent transaction from excluded category:", category.name, transaction.payee_name);
                         isExcludedCategory = true;
                     }
@@ -348,7 +348,7 @@ module.exports = NodeHelper.create({
 
     calculateGroupSummaries: function (categoryGroups) {
         const summaries = [];
-        const requestedGroups = config.groups || [];
+        const requestedGroups = this.config.groups || [];
         
         categoryGroups.forEach(group => {
             if (group.categories && group.categories.length > 0) {
