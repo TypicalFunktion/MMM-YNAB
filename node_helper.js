@@ -195,13 +195,23 @@ module.exports = NodeHelper.create({
                         // Additional checks to exclude transfers and deposits
                         const isTransfer = transaction.transfer_account_id || 
                                          transaction.transfer_transaction_id ||
-                                         (transaction.payee_name && transaction.payee_name.toLowerCase().includes('transfer'));
+                                         (transaction.payee_name && transaction.payee_name.toLowerCase().includes('transfer')) ||
+                                         (transaction.memo && transaction.memo.toLowerCase().includes('transfer'));
                         
                         const isDeposit = transaction.amount < 0 || 
                                         (transaction.payee_name && (
                                             transaction.payee_name.toLowerCase().includes('deposit') ||
                                             transaction.payee_name.toLowerCase().includes('direct deposit') ||
-                                            transaction.payee_name.toLowerCase().includes('payroll')
+                                            transaction.payee_name.toLowerCase().includes('payroll') ||
+                                            transaction.payee_name.toLowerCase().includes('income') ||
+                                            transaction.payee_name.toLowerCase().includes('salary') ||
+                                            transaction.payee_name.toLowerCase().includes('paycheck')
+                                        )) ||
+                                        (transaction.memo && (
+                                            transaction.memo.toLowerCase().includes('deposit') ||
+                                            transaction.memo.toLowerCase().includes('income') ||
+                                            transaction.memo.toLowerCase().includes('salary') ||
+                                            transaction.memo.toLowerCase().includes('paycheck')
                                         ));
                         
                         // Only count if it's not a transfer and not a deposit
