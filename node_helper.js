@@ -209,6 +209,23 @@ module.exports = NodeHelper.create({
             // Exclude transfers
             if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false;
             
+            // Exclude income-related transactions
+            const isIncome = (transaction.payee_name && (
+                transaction.payee_name.toLowerCase().includes('deposit') ||
+                transaction.payee_name.toLowerCase().includes('direct deposit') ||
+                transaction.payee_name.toLowerCase().includes('payroll') ||
+                transaction.payee_name.toLowerCase().includes('income') ||
+                transaction.payee_name.toLowerCase().includes('salary') ||
+                transaction.payee_name.toLowerCase().includes('paycheck')
+            )) || (transaction.memo && (
+                transaction.memo.toLowerCase().includes('deposit') ||
+                transaction.memo.toLowerCase().includes('income') ||
+                transaction.memo.toLowerCase().includes('salary') ||
+                transaction.memo.toLowerCase().includes('paycheck')
+            ));
+            
+            if (isIncome) return false;
+            
             // Exclude transactions from excluded groups
             const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
             if (transaction.category_id) {

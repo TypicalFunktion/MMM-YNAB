@@ -23,6 +23,22 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.module.MMM-YNAB .ynab-subsection {
+    margin-top: 10px;
+    padding-left: 10px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.module.MMM-YNAB .ynab-subsection-title {
+    font-weight: bold;
+    font-size: 0.8em;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+    padding: 1px 0;
+}
+
 .module.MMM-YNAB .ynab-row {
     display: flex;
     justify-content: space-between;
@@ -48,6 +64,11 @@
 
 .module.MMM-YNAB .ynab-row.ynab-group .ynab-balance {
     font-weight: bold;
+}
+
+.module.MMM-YNAB .ynab-row.ynab-sub {
+    font-size: 0.9em;
+    padding: 1px 0;
 }
 
 .module.MMM-YNAB .ynab-name {

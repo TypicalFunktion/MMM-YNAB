@@ -69,24 +69,19 @@ Module.register("MMM-YNAB", {
             if (spending.lastWeek > 0) {
                 html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance">${formatAmount(spending.lastWeek)}</span></div>`;
             }
-            html += '</div>';
-        }
 
-        // Add last transactions section if available
-        if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-            html += '<div class="ynab-section">';
-            html += '<div class="ynab-section-title">Recent Transactions</div>';
-            
-            const formatAmount = (amount) => {
-                return this.config.showCurrency ? 
-                    `$${amount.toFixed(2)}` : 
-                    amount.toFixed(2);
-            };
+            // Add recent transactions as sub-list
+            if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
+                html += '<div class="ynab-subsection">';
+                html += '<div class="ynab-subsection-title">Recent</div>';
+                
+                this.result.lastTransactions.forEach(transaction => {
+                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${transaction.payee}</span><span class="ynab-balance">${formatAmount(transaction.amount)}</span></div>`;
+                });
+                
+                html += '</div>';
+            }
 
-            this.result.lastTransactions.forEach(transaction => {
-                html += `<div class="ynab-row"><span class="ynab-name">${transaction.payee}</span><span class="ynab-balance">${formatAmount(transaction.amount)}</span></div>`;
-            });
-            
             html += '</div>';
         }
 
