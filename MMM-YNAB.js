@@ -49,7 +49,14 @@ Module.register("MMM-YNAB", {
     rotateTransactions: function () {
         if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
             this.currentTransactionIndex = (this.currentTransactionIndex + 1) % Math.max(1, this.result.lastTransactions.length - 2);
-            this.updateDom(1000); // Update with animation
+            
+            // Find the transactions container and animate the scroll
+            const container = document.querySelector('.ynab-transactions-container');
+            if (container) {
+                const rowHeight = 20; // Height of each transaction row
+                const translateY = -(this.currentTransactionIndex * rowHeight);
+                container.style.transform = `translateY(${translateY}px)`;
+            }
         }
     },
 
@@ -99,19 +106,21 @@ Module.register("MMM-YNAB", {
                 html += '<div class="ynab-subsection">';
                 html += '<div class="ynab-subsection-title">Recent</div>';
                 
-                // Get the current set of 3 transactions to display
-                const startIndex = this.currentTransactionIndex;
-                const transactionsToShow = this.result.lastTransactions.slice(startIndex, startIndex + 3);
+                // Create a container for smooth scrolling animation
+                const initialTranslateY = -(this.currentTransactionIndex * 20); // 20px per row
+                html += `<div class="ynab-transactions-container" style="transform: translateY(${initialTranslateY}px);">`;
                 
-                transactionsToShow.forEach(transaction => {
+                // Show all 10 transactions in the container (only 3 will be visible due to overflow)
+                this.result.lastTransactions.forEach((transaction, index) => {
                     const transactionDate = new Date(transaction.date);
                     const formattedDate = transactionDate.toLocaleDateString('en-US', { 
                         month: 'numeric', 
                         year: '2-digit' 
                     });
-                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${formattedDate} - ${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
+                    html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${formattedDate} - ${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
                 });
                 
+                html += '</div>';
                 html += '</div>';
             }
 
