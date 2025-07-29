@@ -137,24 +137,32 @@ module.exports = NodeHelper.create({
         let lastWeekSpending = 0;
         let uncategorizedSpending = 0;
 
-        // Get category groups to identify bill categories
-        const billGroups = ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
+        // Get excluded groups from config, with fallback to common bill groups
+        const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
         
         transactions.forEach(transaction => {
             if (transaction.amount > 0) { // Only count spending (positive amounts)
                 const transactionDate = new Date(transaction.date);
                 
-                // Check if this transaction belongs to a bill category
-                let isBillTransaction = false;
+                // Check if this transaction belongs to an excluded category group
+                let isExcludedGroupTransaction = false;
+                let isExcludedCategory = false;
+                let transactionCategoryName = null;
+                
                 if (transaction.category_id) {
                     // Find the category group for this transaction
                     for (const group of this.categoryGroups || []) {
                         if (group.categories) {
                             const category = group.categories.find(cat => cat.id === transaction.category_id);
                             if (category) {
-                                // Check if this category belongs to a bill group
-                                if (billGroups.includes(group.name)) {
-                                    isBillTransaction = true;
+                                transactionCategoryName = category.name;
+                                // Check if this category belongs to an excluded group
+                                if (excludedGroups.includes(group.name)) {
+                                    isExcludedGroupTransaction = true;
+                                }
+                                // Check if this category is in the excluded list
+                                if (config.excludedCategories && config.excludedCategories.includes(category.name)) {
+                                    isExcludedCategory = true;
                                 }
                                 break;
                             }
@@ -162,8 +170,8 @@ module.exports = NodeHelper.create({
                     }
                 }
                 
-                // Only count non-bill transactions
-                if (!isBillTransaction) {
+                // Only count non-excluded group and non-excluded category transactions
+                if (!isExcludedGroupTransaction && !isExcludedCategory) {
                     // Today's spending
                     if (transactionDate >= today) {
                         todaySpending += transaction.amount;
