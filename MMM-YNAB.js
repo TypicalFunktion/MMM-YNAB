@@ -61,13 +61,13 @@ Module.register("MMM-YNAB", {
             };
 
             if (spending.today > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance">${formatAmount(spending.today)}</span></div>`;
+                html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${formatAmount(spending.today)})</span></div>`;
             }
             if (spending.thisWeek > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance">${formatAmount(spending.thisWeek)}</span></div>`;
+                html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
             }
             if (spending.lastWeek > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance">${formatAmount(spending.lastWeek)}</span></div>`;
+                html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance spending">(${formatAmount(spending.lastWeek)})</span></div>`;
             }
 
             // Add recent transactions as sub-list
@@ -76,7 +76,7 @@ Module.register("MMM-YNAB", {
                 html += '<div class="ynab-subsection-title">Recent</div>';
                 
                 this.result.lastTransactions.forEach(transaction => {
-                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${transaction.payee}</span><span class="ynab-balance">${formatAmount(transaction.amount)}</span></div>`;
+                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
                 });
                 
                 html += '</div>';

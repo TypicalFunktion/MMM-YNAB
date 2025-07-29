@@ -95,6 +95,10 @@
     font-weight: bold;
 }
 
+.module.MMM-YNAB .ynab-balance.spending {
+    color: #F44336;
+}
+
 .module.MMM-YNAB .ynab-loading {
     text-align: center;
     color: #888;
