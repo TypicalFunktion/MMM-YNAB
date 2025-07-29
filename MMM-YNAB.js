@@ -68,7 +68,7 @@ Module.register("MMM-YNAB", {
             // Find the transactions container and animate the scroll
             const container = document.querySelector('.ynab-transactions-container');
             if (container) {
-                const rowHeight = 22; // Height per row including border (21px content + 1px border)
+                const rowHeight = 26; // Height per row (78px / 3 rows)
                 const translateY = -(this.currentTransactionIndex * rowHeight);
                 container.style.transform = `translateY(${translateY}px)`;
             }
@@ -127,7 +127,7 @@ Module.register("MMM-YNAB", {
                 // Create a container for smooth scrolling animation
                 const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
                 const clampedIndex = Math.min(this.currentTransactionIndex, maxIndex);
-                const initialTranslateY = -(clampedIndex * 22); // 22px per row including border
+                const initialTranslateY = -(clampedIndex * 26); // 26px per row
                 html += `<div class="ynab-transactions-container" style="transform: translateY(${initialTranslateY}px);">`;
                 
                 // Show all 10 transactions in the container (only 3 will be visible due to overflow)

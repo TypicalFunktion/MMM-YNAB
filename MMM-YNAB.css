@@ -72,7 +72,7 @@
 }
 
 .module.MMM-YNAB .ynab-transactions-wrapper {
-    height: 66px; /* Container height */
+    height: 78px; /* Container height for 3 rows × 26px each */
     overflow: hidden;
     position: relative;
     margin: 0;
