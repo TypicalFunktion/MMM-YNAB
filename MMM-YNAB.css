@@ -67,6 +67,11 @@
     color: #F44336;
 }
 
+.module.MMM-YNAB .ynab-balance.income {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
 .module.MMM-YNAB .ynab-loading {
     text-align: center;
     color: #888;
