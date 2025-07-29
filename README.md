@@ -7,12 +7,15 @@ This is a module for the [MagicMirror²](https://github.com/MichMich/MagicMirror
 ## Features
 
 - ✅ Display category balances from your YNAB budget
+- ✅ Show category group totals (e.g., "Monthly Bills", "True Expenses")
+- ✅ Track spending for today, this week, and last week
 - ✅ Configurable update intervals
 - ✅ Error handling with user-friendly messages
 - ✅ Loading states and visual feedback
 - ✅ Support for negative balances (red text)
 - ✅ Responsive design for different screen sizes
 - ✅ Configurable currency display
+- ✅ Support for multiple budgets via budgetId
 - ✅ Automatic cleanup when module is stopped
 
 ## Installation
@@ -29,14 +32,15 @@ var config = {
     modules: [
         {
             module: "MMM-YNAB",
-            position: "top_bar",
+            position: "top_right",
             config: {
                 token: "ADD_YNAB_TOKEN_HERE",
-                categories: ["Household", "Pets", "Grocery", "Kids Clothes", "Restaurants", "Lunch", "Spontaneous Fun"],
+                budgetId: "3d894cb9-d783-4bd0-a9a6-f7a3c79becc1", // Optional
+                categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
                 updateInterval: 90000, // 90 seconds (optional, default: 90000)
                 showCurrency: true,    // Show $ symbol (optional, default: true)
                 currencyFormat: "USD", // Currency format (optional, default: "USD")
-                // budgetId: "3d894cb9-d783-4bd0-a9a6-f7a3c79becc1", // Optional
+                showGroupSummaries: true, // Show category group totals (optional, default: true)
             }
         },
     ]
@@ -48,11 +52,12 @@ var config = {
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `token` | String | `""` | **Required** Your YNAB API access token |
+| `budgetId` | String | `null` | **Optional** Specific budget ID to use (if you have multiple budgets) |
 | `categories` | Array | `["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"]` | Array of category names to display |
 | `updateInterval` | Number | `90000` | Update interval in milliseconds (90 seconds) |
 | `showCurrency` | Boolean | `true` | Whether to show the $ symbol before amounts |
 | `currencyFormat` | String | `"USD"` | Currency format (currently only USD is supported) |
-| `budgetId` | String | `null` | Specific budget ID to use (optional) |
+| `showGroupSummaries` | Boolean | `true` | Whether to show category group totals |
 
 ### Finding Your Budget ID
 

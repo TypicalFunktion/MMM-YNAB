@@ -73,37 +73,119 @@ module.exports = NodeHelper.create({
         
         const ynabAPI = new ynab.API(config.token);
         
-        ynabAPI.categories.getCategories(ynabBudgetId)
-            .then(categoriesResponse => {
-                const categoryGroups = categoriesResponse.data.category_groups || [];
-                const allCategories = categoryGroups.flatMap(group => group.categories || []);
-                
-                // Create a map for quick lookup
-                const categoryMap = new Map();
-                allCategories.forEach(category => {
-                    categoryMap.set(category.name, category);
-                });
-
-                // Filter categories based on config
-                const requestedCategories = config.categories || [];
-                const filteredCategories = requestedCategories
-                    .map(categoryName => categoryMap.get(categoryName))
-                    .filter(category => category !== undefined);
-
-                if (filteredCategories.length === 0) {
-                    console.log("MMM-YNAB: No matching categories found. Available categories:", 
-                        Array.from(categoryMap.keys()).join(", "));
-                }
-
-                self.sendSocketNotification("YNAB_UPDATE", {
-                    items: filteredCategories,
-                    totalCategories: allCategories.length,
-                    matchedCategories: filteredCategories.length
-                });
-            })
-            .catch(error => {
-                this.handleError(error, "Failed to fetch categories");
+        // Fetch both categories and transactions
+        Promise.all([
+            ynabAPI.categories.getCategories(ynabBudgetId),
+            ynabAPI.transactions.getTransactions(ynabBudgetId)
+        ])
+        .then(([categoriesResponse, transactionsResponse]) => {
+            const categoryGroups = categoriesResponse.data.category_groups || [];
+            const allCategories = categoryGroups.flatMap(group => group.categories || []);
+            const transactions = transactionsResponse.data.transactions || [];
+            
+            // Create a map for quick lookup
+            const categoryMap = new Map();
+            allCategories.forEach(category => {
+                categoryMap.set(category.name, category);
             });
+
+            // Filter categories based on config
+            const requestedCategories = config.categories || [];
+            const filteredCategories = requestedCategories
+                .map(categoryName => categoryMap.get(categoryName))
+                .filter(category => category !== undefined);
+
+            if (filteredCategories.length === 0) {
+                console.log("MMM-YNAB: No matching categories found. Available categories:", 
+                    Array.from(categoryMap.keys()).join(", "));
+            }
+
+            // Calculate category group summaries
+            const groupSummaries = this.calculateGroupSummaries(categoryGroups);
+
+            // Calculate spending for different time periods
+            const spendingData = this.calculateSpending(transactions);
+
+            self.sendSocketNotification("YNAB_UPDATE", {
+                items: filteredCategories,
+                spending: spendingData,
+                groupSummaries: groupSummaries,
+                totalCategories: allCategories.length,
+                matchedCategories: filteredCategories.length
+            });
+        })
+        .catch(error => {
+            this.handleError(error, "Failed to fetch budget data");
+        });
+    },
+
+    calculateSpending: function (transactions) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        const endOfLastWeek = new Date(startOfWeek);
+        endOfLastWeek.setDate(startOfWeek.getDate() - 1);
+
+        let todaySpending = 0;
+        let thisWeekSpending = 0;
+        let lastWeekSpending = 0;
+
+        transactions.forEach(transaction => {
+            if (transaction.amount > 0) { // Only count spending (positive amounts)
+                const transactionDate = new Date(transaction.date);
+                
+                // Today's spending
+                if (transactionDate >= today) {
+                    todaySpending += transaction.amount;
+                }
+                
+                // This week's spending
+                if (transactionDate >= startOfWeek) {
+                    thisWeekSpending += transaction.amount;
+                }
+                
+                // Last week's spending
+                if (transactionDate >= startOfLastWeek && transactionDate < startOfWeek) {
+                    lastWeekSpending += transaction.amount;
+                }
+            }
+        });
+
+        return {
+            today: todaySpending / 1000, // Convert from millidollars
+            thisWeek: thisWeekSpending / 1000,
+            lastWeek: lastWeekSpending / 1000
+        };
+    },
+
+    calculateGroupSummaries: function (categoryGroups) {
+        const summaries = [];
+        
+        categoryGroups.forEach(group => {
+            if (group.categories && group.categories.length > 0) {
+                // Calculate total available for this group
+                const totalAvailable = group.categories.reduce((sum, category) => {
+                    return sum + (category.balance || 0);
+                }, 0);
+                
+                // Only include groups that have available money
+                if (totalAvailable > 0) {
+                    summaries.push({
+                        name: group.name,
+                        totalAvailable: totalAvailable / 1000, // Convert from millidollars
+                        categoryCount: group.categories.length
+                    });
+                }
+            }
+        });
+        
+        // Sort by total available amount (highest first)
+        summaries.sort((a, b) => b.totalAvailable - a.totalAvailable);
+        
+        return summaries;
     },
 
     handleError: function (error, defaultMessage) {

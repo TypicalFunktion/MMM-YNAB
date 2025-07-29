@@ -4,10 +4,12 @@ Module.register("MMM-YNAB", {
     error: null,
     defaults: {
         token: "",
+        budgetId: null, // Optional: specific budget ID to use
         categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,
-        currencyFormat: "USD"
+        currencyFormat: "USD",
+        showGroupSummaries: true // Show category group totals (optional)
     },
 
     start: function () {
@@ -40,6 +42,44 @@ Module.register("MMM-YNAB", {
             return wrapper;
         }
 
+        let html = '';
+
+        // Add spending section if spending data is available
+        if (this.result.spending) {
+            html += '<div class="ynab-section">';
+            html += '<div class="ynab-section-title">Spending</div>';
+            
+            const spending = this.result.spending;
+            const formatAmount = (amount) => {
+                return this.config.showCurrency ? 
+                    `$${amount.toFixed(2)}` : 
+                    amount.toFixed(2);
+            };
+
+            html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance">${formatAmount(spending.today)}</span></div>`;
+            html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance">${formatAmount(spending.thisWeek)}</span></div>`;
+            html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance">${formatAmount(spending.lastWeek)}</span></div>`;
+            html += '</div>';
+        }
+
+        // Add combined category balances section
+        html += '<div class="ynab-section">';
+        html += '<div class="ynab-section-title">Category Balances</div>';
+        
+        const formatAmount = (amount) => {
+            return this.config.showCurrency ? 
+                `$${amount.toFixed(2)}` : 
+                amount.toFixed(2);
+        };
+
+        // Add group summaries first (if enabled)
+        if (this.result.groupSummaries && this.result.groupSummaries.length > 0 && this.config.showGroupSummaries) {
+            this.result.groupSummaries.forEach(group => {
+                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span><span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
+            });
+        }
+
+        // Add individual category balances
         const itemsHtml = this.result.items.map(item => {
             const balance = item.balance / 1000;
             const formattedBalance = this.config.showCurrency ? 
@@ -48,10 +88,13 @@ Module.register("MMM-YNAB", {
             
             const balanceClass = balance < 0 ? 'ynab-balance negative' : 'ynab-balance';
             
-            return `<span class="ynab-name">${item.name}</span><span class="${balanceClass}">${formattedBalance}</span>`;
+            return `<div class="ynab-row"><span class="ynab-name">${item.name}</span><span class="${balanceClass}">${formattedBalance}</span></div>`;
         }).join('');
 
-        wrapper.innerHTML = itemsHtml;
+        html += itemsHtml;
+        html += '</div>';
+
+        wrapper.innerHTML = html;
         return wrapper;
     },
 
