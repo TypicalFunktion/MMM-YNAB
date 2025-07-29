@@ -17,7 +17,8 @@ Module.register("MMM-YNAB", {
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,
         currencyFormat: "USD",
-        showGroupSummaries: true // Show category group totals (optional)
+        showGroupSummaries: true, // Show category group totals (optional)
+        transactionAnimationDelay: 15000 // Animation delay in milliseconds (15 seconds)
     },
 
     start: function () {
@@ -42,7 +43,7 @@ Module.register("MMM-YNAB", {
     startTransactionRotation: function () {
         this.rotationTimer = setInterval(() => {
             this.rotateTransactions();
-        }, 15000); // 15 seconds
+        }, this.config.transactionAnimationDelay); // Use configurable delay
     },
 
     stopTransactionRotation: function () {

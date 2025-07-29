@@ -47,6 +47,7 @@ var config = {
                 recentExcludedGroups: ["Monthly Bills", "Bills"], // Optional: category groups to exclude from recent transactions
                 showGroupSummaries: true, // Show category group totals (optional, default: true)
                 showUncleared: true, // Include uncleared transactions (optional, default: true)
+                transactionAnimationDelay: 10000, // Animation delay for recent transactions (10 seconds)
             }
         },
     ]
@@ -70,6 +71,7 @@ var config = {
 | `currencyFormat` | String | `"USD"` | Currency format (currently only USD is supported) |
 | `showGroupSummaries` | Boolean | `true` | Whether to show category group totals |
 | `showUncleared` | Boolean | `true` | Include uncleared transactions (optional, default: true) |
+| `transactionAnimationDelay` | Number | `15000` | Animation delay for recent transactions in milliseconds (15 seconds) |
 
 ### Finding Your Budget ID
 
@@ -95,6 +97,9 @@ The module provides detailed logging in the MagicMirror console. Look for messag
 Your YNAB API token is stored in the MagicMirror configuration file. Ensure this file is properly secured and not shared publicly.
 
 ## Changelog
+
+### v1.2.1
+- ✅ Added configurable transaction animation delay (`transactionAnimationDelay`)
 
 ### v1.2.0
 - ✅ Added recent transaction filters (`recentExcludedCategories`, `recentExcludedGroups`)
