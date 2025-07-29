@@ -192,7 +192,37 @@ module.exports = NodeHelper.create({
                 if (!transaction.category_id) {
                     // Only count uncategorized spending (positive amounts), not deposits or transfers
                     if (transaction.amount > 0) {
-                        uncategorizedSpending += transaction.amount;
+                        // Additional checks to exclude transfers and deposits
+                        const isTransfer = transaction.transfer_account_id || 
+                                         transaction.transfer_transaction_id ||
+                                         (transaction.payee_name && transaction.payee_name.toLowerCase().includes('transfer'));
+                        
+                        const isDeposit = transaction.amount < 0 || 
+                                        (transaction.payee_name && (
+                                            transaction.payee_name.toLowerCase().includes('deposit') ||
+                                            transaction.payee_name.toLowerCase().includes('direct deposit') ||
+                                            transaction.payee_name.toLowerCase().includes('payroll')
+                                        ));
+                        
+                        // Only count if it's not a transfer and not a deposit
+                        if (!isTransfer && !isDeposit) {
+                            uncategorizedSpending += transaction.amount;
+                            console.log("MMM-YNAB: Counting uncategorized transaction:", {
+                                date: transaction.date,
+                                amount: transaction.amount / 1000,
+                                payee: transaction.payee_name,
+                                memo: transaction.memo
+                            });
+                        } else {
+                            console.log("MMM-YNAB: Excluding uncategorized transaction:", {
+                                date: transaction.date,
+                                amount: transaction.amount / 1000,
+                                payee: transaction.payee_name,
+                                memo: transaction.memo,
+                                isTransfer,
+                                isDeposit
+                            });
+                        }
                     }
                 }
             }
