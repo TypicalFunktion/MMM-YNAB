@@ -72,7 +72,7 @@
 }
 
 .module.MMM-YNAB .ynab-transactions-wrapper {
-    height: 60px; /* Reduced from 63px */
+    height: 70px; /* Reduced from 63px */
     overflow: hidden;
     position: relative;
     margin: 0;
@@ -142,7 +142,7 @@
 .module.MMM-YNAB .ynab-last-updated {
     text-align: right;
     color: var(--color-text-dimmed);
-    font-size: 0.4em;
+    font-size: 0.5em;
     padding: 2px 0; /* Reduced from 3px */
     margin-top: 3px; /* Reduced from 5px */
     border-top: 1px solid rgba(255, 255, 255, 0.05);
