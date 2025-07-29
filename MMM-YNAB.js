@@ -1,38 +1,88 @@
 Module.register("MMM-YNAB", {
     result: [],
+    loading: true,
+    error: null,
     defaults: {
         token: "",
-        categories: [ "Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun" ]
+        categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
+        updateInterval: 90000, // 90 seconds, now configurable
+        showCurrency: true,
+        currencyFormat: "USD"
     },
 
     start: function () {
+        this.loading = true;
+        this.error = null;
         this.sendSocketNotification('YNAB_SET_CONFIG', this.config);
     },
 
+    stop: function () {
+        // Clean up when module is stopped
+        this.sendSocketNotification('YNAB_CLEANUP');
+    },
+
     getDom: function () {
-        var wrapper = document.createElement("div");
+        const wrapper = document.createElement("div");
         wrapper.classList = ["xsmall"];
-        wrapper.innerHTML = "Loading YNAB";
-        if (this.result.items && this.result.items.length > 0) {
-            for (let i of this.result.items) {
-                wrapper.innerHTML = this.result.items.map(a => "<span class='ynab-name'>" + a.name + "</span><span class='ynab-balance'>$" + (a.balance/1000).toFixed(2) + "</span>").join('');
-            }
+
+        if (this.error) {
+            wrapper.innerHTML = `<div class="ynab-error">Error: ${this.error}</div>`;
+            return wrapper;
         }
+
+        if (this.loading) {
+            wrapper.innerHTML = '<div class="ynab-loading">Loading YNAB...</div>';
+            return wrapper;
+        }
+
+        if (!this.result.items || this.result.items.length === 0) {
+            wrapper.innerHTML = '<div class="ynab-no-data">No category data available</div>';
+            return wrapper;
+        }
+
+        const itemsHtml = this.result.items.map(item => {
+            const balance = item.balance / 1000;
+            const formattedBalance = this.config.showCurrency ? 
+                `$${balance.toFixed(2)}` : 
+                balance.toFixed(2);
+            
+            const balanceClass = balance < 0 ? 'ynab-balance negative' : 'ynab-balance';
+            
+            return `<span class="ynab-name">${item.name}</span><span class="${balanceClass}">${formattedBalance}</span>`;
+        }).join('');
+
+        wrapper.innerHTML = itemsHtml;
         return wrapper;
     },
 
     socketNotificationReceived: function (notification, payload) {
-        console.log("notification: " + notification);
-        console.log("payload: " + JSON.stringify(payload));
-        if (notification == "YNAB_UPDATE") {
-            this.result = payload;
-            this.updateDom(0);
+        console.log("MMM-YNAB notification:", notification);
+        
+        switch (notification) {
+            case "YNAB_UPDATE":
+                this.result = payload;
+                this.loading = false;
+                this.error = null;
+                this.updateDom(0);
+                break;
+                
+            case "YNAB_ERROR":
+                this.error = payload.message || "Unknown error occurred";
+                this.loading = false;
+                this.updateDom(0);
+                break;
+                
+            case "YNAB_LOADING":
+                this.loading = true;
+                this.error = null;
+                this.updateDom(0);
+                break;
         }
     },
 
     getStyles: function() {
         return [
             this.file('MMM-YNAB.css')
-        ]
+        ];
     }
 });

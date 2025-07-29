@@ -1,13 +1,35 @@
 {
   "name": "mmm-ynab",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.1.0",
+  "description": "A MagicMirror² module to display YNAB (You Need A Budget) category balances",
+  "main": "MMM-YNAB.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"No linter configured\" && exit 0",
+    "postinstall": "echo \"MMM-YNAB module installed successfully!\""
   },
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "magicmirror",
+    "magicmirror2",
+    "ynab",
+    "budget",
+    "finance",
+    "categories"
+  ],
+  "author": "thesoftwarejedi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thesoftwarejedi/MMM-YNAB.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thesoftwarejedi/MMM-YNAB/issues"
+  },
+  "homepage": "https://github.com/thesoftwarejedi/MMM-YNAB#readme",
   "dependencies": {
     "ynab": "^1.21.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
