@@ -206,104 +206,85 @@ module.exports = NodeHelper.create({
     },
 
     getLastTransactions: function (transactions, count) {
-        // Filter out transfers and get only spending transactions
+        const self = this;
+        const config = this.config;
+        
+        console.log("Filtering recent transactions with config:", {
+            recentExcludedCategories: config.recentExcludedCategories,
+            recentExcludedGroups: config.recentExcludedGroups
+        });
+
         const spendingTransactions = transactions.filter(transaction => {
-            // Only include negative amounts (spending) - exclude positive amounts (income)
-            if (transaction.amount >= 0) return false;
+            if (transaction.amount >= 0) return false; // Exclude positive amounts (income)
+            if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false; // Exclude transfers
+            if (!config.showUncleared && !transaction.cleared) { return false; } // Exclude uncleared
             
-            // Check if we should exclude uncleared transactions
-            if (!config.showUncleared && !transaction.cleared) {
-                return false; // Skip uncleared transactions
-            }
-            
-            // Exclude transfers
-            if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false;
-            
-            // Exclude income-related transactions (positive amounts that might slip through)
-            const isIncome = (transaction.payee_name && (
-                transaction.payee_name.toLowerCase().includes('deposit') ||
-                transaction.payee_name.toLowerCase().includes('direct deposit') ||
-                transaction.payee_name.toLowerCase().includes('payroll') ||
-                transaction.payee_name.toLowerCase().includes('income') ||
-                transaction.payee_name.toLowerCase().includes('salary') ||
-                transaction.payee_name.toLowerCase().includes('paycheck') ||
-                transaction.payee_name.toLowerCase().includes('refund') ||
-                transaction.payee_name.toLowerCase().includes('credit')
-            )) || (transaction.memo && (
-                transaction.memo.toLowerCase().includes('deposit') ||
-                transaction.memo.toLowerCase().includes('income') ||
-                transaction.memo.toLowerCase().includes('salary') ||
-                transaction.memo.toLowerCase().includes('paycheck') ||
-                transaction.memo.toLowerCase().includes('refund') ||
-                transaction.memo.toLowerCase().includes('credit')
-            ));
+            // Check for income-related keywords in payee or memo
+            const payeeLower = (transaction.payee_name || '').toLowerCase();
+            const memoLower = (transaction.memo || '').toLowerCase();
+            const isIncome = payeeLower.includes('deposit') || 
+                           payeeLower.includes('direct deposit') || 
+                           payeeLower.includes('payroll') || 
+                           payeeLower.includes('income') || 
+                           payeeLower.includes('salary') || 
+                           payeeLower.includes('paycheck') ||
+                           memoLower.includes('deposit') || 
+                           memoLower.includes('direct deposit') || 
+                           memoLower.includes('payroll') || 
+                           memoLower.includes('income') || 
+                           memoLower.includes('salary') || 
+                           memoLower.includes('paycheck') ||
+                           payeeLower.includes('refund') ||
+                           payeeLower.includes('credit') ||
+                           memoLower.includes('refund') ||
+                           memoLower.includes('credit');
             
             if (isIncome) {
-                console.log("MMM-YNAB: Excluding income transaction:", {
-                    date: transaction.date,
-                    payee: transaction.payee_name,
-                    memo: transaction.memo,
-                    amount: transaction.amount / 1000
-                });
+                console.log("Excluding income transaction:", transaction.payee_name, transaction.memo);
                 return false;
             }
-            
-            // Exclude transactions from excluded groups
-            const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
-            if (transaction.category_id) {
-                for (const group of this.categoryGroups || []) {
-                    if (group.categories) {
-                        const category = group.categories.find(cat => cat.id === transaction.category_id);
-                        if (category && excludedGroups.includes(group.name)) {
-                            console.log("MMM-YNAB: Excluding bill transaction:", {
-                                date: transaction.date,
-                                payee: transaction.payee_name,
-                                category: category.name,
-                                group: group.name,
-                                amount: transaction.amount / 1000
-                            });
-                            return false;
+
+            // Check if transaction belongs to excluded groups for recent transactions
+            let isExcludedGroupTransaction = false;
+            if (config.recentExcludedGroups && config.recentExcludedGroups.length > 0) {
+                const categoryId = transaction.category_id;
+                if (categoryId) {
+                    const category = this.categories.find(cat => cat.id === categoryId);
+                    if (category) {
+                        const categoryGroup = this.categoryGroups.find(group => group.id === category.category_group_id);
+                        if (categoryGroup && config.recentExcludedGroups.includes(categoryGroup.name)) {
+                            console.log("Excluding recent transaction from excluded group:", categoryGroup.name, transaction.payee_name);
+                            isExcludedGroupTransaction = true;
                         }
                     }
                 }
             }
-            
-            // Exclude specific categories
-            if (config.excludedCategories && transaction.category_id) {
-                for (const group of this.categoryGroups || []) {
-                    if (group.categories) {
-                        const category = group.categories.find(cat => cat.id === transaction.category_id);
-                        if (category && config.excludedCategories.includes(category.name)) {
-                            console.log("MMM-YNAB: Excluding category transaction:", {
-                                date: transaction.date,
-                                payee: transaction.payee_name,
-                                category: category.name,
-                                amount: transaction.amount / 1000
-                            });
-                            return false;
-                        }
+
+            // Check if transaction belongs to excluded categories for recent transactions
+            let isExcludedCategory = false;
+            if (config.recentExcludedCategories && config.recentExcludedCategories.length > 0) {
+                const categoryId = transaction.category_id;
+                if (categoryId) {
+                    const category = this.categories.find(cat => cat.id === categoryId);
+                    if (category && config.recentExcludedCategories.includes(category.name)) {
+                        console.log("Excluding recent transaction from excluded category:", category.name, transaction.payee_name);
+                        isExcludedCategory = true;
                     }
                 }
             }
-            
-            console.log("MMM-YNAB: Including transaction:", {
-                date: transaction.date,
-                payee: transaction.payee_name,
-                amount: transaction.amount / 1000
-            });
-            
-            return true;
+
+            return !isExcludedGroupTransaction && !isExcludedCategory;
         });
-        
-        // Sort by date (most recent first) and take the last 'count' transactions
-        const sortedTransactions = spendingTransactions
-            .sort((a, b) => new Date(b.date) - new Date(a.date))
-            .slice(0, count);
-        
-        // Format the transactions
-        return sortedTransactions.map(transaction => ({
+
+        console.log(`Filtered ${spendingTransactions.length} recent transactions from ${transactions.length} total transactions`);
+
+        // Sort by date (most recent first) and take the specified count
+        const sortedTransactions = spendingTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+        const recentTransactions = sortedTransactions.slice(0, count);
+
+        return recentTransactions.map(transaction => ({
             payee: transaction.payee_name || 'Unknown',
-            amount: Math.abs(transaction.amount) / 1000, // Convert from millidollars and make positive for display
+            amount: Math.abs(transaction.amount) / 1000, // Make positive for display
             date: transaction.date
         }));
     },
