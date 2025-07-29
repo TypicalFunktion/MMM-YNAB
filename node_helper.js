@@ -147,6 +147,11 @@ module.exports = NodeHelper.create({
             if (transaction.amount < 0) { // Only count spending (negative amounts)
                 const transactionDate = new Date(transaction.date);
                 
+                // Check if we should exclude uncleared transactions
+                if (!config.showUncleared && !transaction.cleared) {
+                    return; // Skip uncleared transactions
+                }
+                
                 // Check if this transaction belongs to an excluded category group
                 let isExcludedGroupTransaction = false;
                 let isExcludedCategory = false;
@@ -205,6 +210,11 @@ module.exports = NodeHelper.create({
         const spendingTransactions = transactions.filter(transaction => {
             // Only include negative amounts (spending) - exclude positive amounts (income)
             if (transaction.amount >= 0) return false;
+            
+            // Check if we should exclude uncleared transactions
+            if (!config.showUncleared && !transaction.cleared) {
+                return false; // Skip uncleared transactions
+            }
             
             // Exclude transfers
             if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false;

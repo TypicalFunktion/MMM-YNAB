@@ -9,6 +9,7 @@ Module.register("MMM-YNAB", {
         groups: [], // Optional: specific category groups to display (e.g., ["Monthly Bills", "True Expenses"])
         excludedCategories: ["Rent"], // Categories to exclude from spending calculations
         excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Category groups to exclude from spending calculations
+        showUncleared: true, // Include uncleared transactions (optional, default: true)
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,
         currencyFormat: "USD",
@@ -76,7 +77,12 @@ Module.register("MMM-YNAB", {
                 html += '<div class="ynab-subsection-title">Recent</div>';
                 
                 this.result.lastTransactions.forEach(transaction => {
-                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
+                    const transactionDate = new Date(transaction.date);
+                    const formattedDate = transactionDate.toLocaleDateString('en-US', { 
+                        month: 'numeric', 
+                        year: '2-digit' 
+                    });
+                    html += `<div class="ynab-row ynab-sub"><span class="ynab-name">${formattedDate} - ${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
                 });
                 
                 html += '</div>';
