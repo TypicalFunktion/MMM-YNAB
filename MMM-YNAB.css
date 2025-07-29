@@ -91,7 +91,7 @@
 .module.MMM-YNAB .ynab-row.ynab-sub {
     font-size: 0.85em; /* Slightly larger for 22px row height */
     padding: 1px 0;
-    height: 22px; /* Exactly 66px ÷ 3 rows */
+    height: 21px; /* 66px ÷ 3 rows - 1px border = 21px content + 1px border = 22px total */
     display: flex;
     align-items: center;
 }
