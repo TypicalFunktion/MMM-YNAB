@@ -8,10 +8,42 @@ let interval;
 
 module.exports = NodeHelper.create({
 
+    start: function () {
+        this.config = {};
+        this.categories = [];
+        this.categoryGroups = [];
+        this.loading = false;
+        this.error = null;
+        
+        // Initialize with defaults to prevent undefined errors
+        this.config.recentExcludedCategories = [];
+        this.config.recentExcludedGroups = [];
+        this.config.excludedCategories = [];
+        this.config.excludedGroups = [];
+        this.config.showUncleared = true;
+        
+        console.log("MMM-YNAB node helper started");
+    },
+
     socketNotificationReceived: function (notification, payload) {
+        const self = this;
+        
         switch (notification) {
             case "YNAB_SET_CONFIG":
-                this.initialize(payload);
+                // Merge the configuration with defaults to ensure all properties exist
+                this.config = {
+                    recentExcludedCategories: [],
+                    recentExcludedGroups: [],
+                    excludedCategories: [],
+                    excludedGroups: [],
+                    showUncleared: true,
+                    ...payload
+                };
+                
+                console.log("MMM-YNAB config received:", this.config);
+                
+                // Initialize the budget
+                this.initializeBudget();
                 break;
             case "YNAB_CLEANUP":
                 this.cleanup();
@@ -19,19 +51,16 @@ module.exports = NodeHelper.create({
         }
     },
 
-    initialize: function (payload) {
-        config = payload;
-        self = this;
-        
-        if (!config.token) {
+    initializeBudget: function () {
+        if (!this.config.token) {
             this.sendError("YNAB token is required");
             return;
         }
 
-        const ynabAPI = new ynab.API(config.token);
+        const ynabAPI = new ynab.API(this.config.token);
 
-        if (config.budgetId) {
-            ynabBudgetId = config.budgetId;
+        if (this.config.budgetId) {
+            ynabBudgetId = this.config.budgetId;
             this.updateBudget();
             this.setInterval();
             return;
@@ -57,9 +86,9 @@ module.exports = NodeHelper.create({
             clearInterval(interval);
         }
         
-        const updateInterval = config.updateInterval || 90000;
+        const updateInterval = this.config.updateInterval || 90000;
         interval = setInterval(() => {
-            self.updateBudget();
+            this.updateBudget();
         }, updateInterval);
     },
 
@@ -69,46 +98,43 @@ module.exports = NodeHelper.create({
             return;
         }
 
-        self.sendSocketNotification("YNAB_LOADING");
-        
-        const ynabAPI = new ynab.API(config.token);
-        
-        // Fetch both categories and transactions
+        if (!this.config.token) {
+            this.sendError("YNAB token is required");
+            return;
+        }
+
+        const ynabAPI = new ynab.API(this.config.token);
+
         Promise.all([
             ynabAPI.categories.getCategories(ynabBudgetId),
             ynabAPI.transactions.getTransactions(ynabBudgetId)
         ])
         .then(([categoriesResponse, transactionsResponse]) => {
-            const categoryGroups = categoriesResponse.data.category_groups || [];
-            const allCategories = categoryGroups.flatMap(group => group.categories || []);
-            const transactions = transactionsResponse.data.transactions || [];
+            const categories = categoriesResponse.data.category_groups;
+            const transactions = transactionsResponse.data.transactions;
             
-            // Store category groups for spending calculation
-            this.categoryGroups = categoryGroups;
+            // Store category groups for use in filtering
+            this.categoryGroups = categories;
             
-            // Create a map for quick lookup
-            const categoryMap = new Map();
-            allCategories.forEach(category => {
-                categoryMap.set(category.name, category);
+            // Get all categories from all groups
+            const allCategories = categories.flatMap(group => group.categories);
+            this.categories = allCategories;
+            
+            // Filter categories based on config
+            const filteredCategories = allCategories.filter(category => {
+                return this.config.categories.includes(category.name);
             });
 
-            // Filter categories based on config
-            const requestedCategories = config.categories || [];
-            const filteredCategories = requestedCategories
-                .map(categoryName => categoryMap.get(categoryName))
-                .filter(category => category !== undefined);
-
             if (filteredCategories.length === 0) {
-                console.log("MMM-YNAB: No matching categories found. Available categories:", 
-                    Array.from(categoryMap.keys()).join(", "));
+                console.log("MMM-YNAB: No matching categories found. Available categories:", allCategories.map(c => c.name));
             }
 
-            // Calculate category group summaries
-            const groupSummaries = this.calculateGroupSummaries(categoryGroups);
-
-            // Calculate spending for different time periods
+            // Calculate spending data
             const spendingData = this.calculateSpending(transactions);
-
+            
+            // Calculate group summaries
+            const groupSummaries = this.calculateGroupSummaries(categories);
+            
             // Get last 10 transactions
             const lastTransactions = this.getLastTransactions(transactions, 10);
 
@@ -117,12 +143,12 @@ module.exports = NodeHelper.create({
                 spending: spendingData,
                 groupSummaries: groupSummaries,
                 lastTransactions: lastTransactions,
-                totalCategories: allCategories.length,
-                matchedCategories: filteredCategories.length
+                loading: false,
+                error: null
             });
         })
         .catch(error => {
-            this.handleError(error, "Failed to fetch budget data");
+            this.handleError(error, "Failed to fetch YNAB data");
         });
     },
 
@@ -329,23 +355,14 @@ module.exports = NodeHelper.create({
         return summaries;
     },
 
-    handleError: function (error, defaultMessage) {
-        console.error("MMM-YNAB Error:", error);
-        
-        let errorMessage = defaultMessage;
-        if (error.response && error.response.data && error.response.data.error) {
-            errorMessage = error.response.data.error.detail || error.response.data.error.title || defaultMessage;
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        this.sendError(errorMessage);
+    handleError: function (error, context) {
+        console.error(`MMM-YNAB ${context}:`, error);
+        this.sendError(`${context}: ${error.message}`);
     },
 
     sendError: function (message) {
         self.sendSocketNotification("YNAB_ERROR", {
-            message: message,
-            timestamp: new Date().toISOString()
+            message: message
         });
     },
 
@@ -354,6 +371,5 @@ module.exports = NodeHelper.create({
             clearInterval(interval);
             interval = null;
         }
-        console.log("MMM-YNAB: Cleanup completed");
     }
 });
