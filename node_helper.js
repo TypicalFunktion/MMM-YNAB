@@ -109,8 +109,8 @@ module.exports = NodeHelper.create({
             // Calculate spending for different time periods
             const spendingData = this.calculateSpending(transactions);
 
-            // Get last 3 transactions
-            const lastTransactions = this.getLastTransactions(transactions, 3);
+            // Get last 10 transactions
+            const lastTransactions = this.getLastTransactions(transactions, 10);
 
             self.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,

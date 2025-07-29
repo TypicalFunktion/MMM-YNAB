@@ -28,6 +28,7 @@
     margin-top: 10px;
     padding-left: 10px;
     border-left: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 1s ease-in-out;
 }
 
 .module.MMM-YNAB .ynab-subsection-title {
@@ -71,6 +72,7 @@
 .module.MMM-YNAB .ynab-row.ynab-sub {
     font-size: 0.8em;
     padding: 1px 0;
+    transition: opacity 0.5s ease-in-out;
 }
 
 .module.MMM-YNAB .ynab-name {

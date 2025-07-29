@@ -2,6 +2,7 @@ Module.register("MMM-YNAB", {
     result: [],
     loading: true,
     error: null,
+    currentTransactionIndex: 0, // Track which set of transactions to show
     defaults: {
         token: "",
         budgetId: null, // Optional: specific budget ID to use
@@ -19,12 +20,37 @@ Module.register("MMM-YNAB", {
     start: function () {
         this.loading = true;
         this.error = null;
+        this.currentTransactionIndex = 0;
         this.sendSocketNotification('YNAB_SET_CONFIG', this.config);
+        
+        // Start transaction rotation timer
+        this.startTransactionRotation();
     },
 
     stop: function () {
         // Clean up when module is stopped
         this.sendSocketNotification('YNAB_CLEANUP');
+        this.stopTransactionRotation();
+    },
+
+    startTransactionRotation: function () {
+        this.rotationTimer = setInterval(() => {
+            this.rotateTransactions();
+        }, 15000); // 15 seconds
+    },
+
+    stopTransactionRotation: function () {
+        if (this.rotationTimer) {
+            clearInterval(this.rotationTimer);
+            this.rotationTimer = null;
+        }
+    },
+
+    rotateTransactions: function () {
+        if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
+            this.currentTransactionIndex = (this.currentTransactionIndex + 1) % Math.max(1, this.result.lastTransactions.length - 2);
+            this.updateDom(1000); // Update with animation
+        }
     },
 
     getDom: function () {
@@ -67,16 +93,17 @@ Module.register("MMM-YNAB", {
             if (spending.thisWeek > 0) {
                 html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
             }
-            if (spending.lastWeek > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">Last Week</span><span class="ynab-balance spending">(${formatAmount(spending.lastWeek)})</span></div>`;
-            }
 
             // Add recent transactions as sub-list
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 html += '<div class="ynab-subsection">';
                 html += '<div class="ynab-subsection-title">Recent</div>';
                 
-                this.result.lastTransactions.forEach(transaction => {
+                // Get the current set of 3 transactions to display
+                const startIndex = this.currentTransactionIndex;
+                const transactionsToShow = this.result.lastTransactions.slice(startIndex, startIndex + 3);
+                
+                transactionsToShow.forEach(transaction => {
                     const transactionDate = new Date(transaction.date);
                     const formattedDate = transactionDate.toLocaleDateString('en-US', { 
                         month: 'numeric', 
