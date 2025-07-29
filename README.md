@@ -37,6 +37,7 @@ var config = {
                 token: "ADD_YNAB_TOKEN_HERE",
                 budgetId: "3d894cb9-d783-4bd0-a9a6-f7a3c79becc1", // Optional
                 categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
+                groups: ["Monthly Bills", "True Expenses", "Debt Payments"], // Optional: specific groups to show
                 updateInterval: 90000, // 90 seconds (optional, default: 90000)
                 showCurrency: true,    // Show $ symbol (optional, default: true)
                 currencyFormat: "USD", // Currency format (optional, default: "USD")
@@ -54,6 +55,7 @@ var config = {
 | `token` | String | `""` | **Required** Your YNAB API access token |
 | `budgetId` | String | `null` | **Optional** Specific budget ID to use (if you have multiple budgets) |
 | `categories` | Array | `["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"]` | Array of category names to display |
+| `groups` | Array | `[]` | **Optional** Array of category group names to display (e.g., ["Monthly Bills", "True Expenses"]) |
 | `updateInterval` | Number | `90000` | Update interval in milliseconds (90 seconds) |
 | `showCurrency` | Boolean | `true` | Whether to show the $ symbol before amounts |
 | `currencyFormat` | String | `"USD"` | Currency format (currently only USD is supported) |

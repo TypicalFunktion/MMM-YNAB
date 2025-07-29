@@ -6,6 +6,7 @@ Module.register("MMM-YNAB", {
         token: "",
         budgetId: null, // Optional: specific budget ID to use
         categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
+        groups: [], // Optional: specific category groups to display (e.g., ["Monthly Bills", "True Expenses"])
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,
         currencyFormat: "USD",

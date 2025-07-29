@@ -163,6 +163,7 @@ module.exports = NodeHelper.create({
 
     calculateGroupSummaries: function (categoryGroups) {
         const summaries = [];
+        const requestedGroups = config.groups || [];
         
         categoryGroups.forEach(group => {
             if (group.categories && group.categories.length > 0) {
@@ -171,13 +172,25 @@ module.exports = NodeHelper.create({
                     return sum + (category.balance || 0);
                 }, 0);
                 
-                // Only include groups that have available money
-                if (totalAvailable > 0) {
-                    summaries.push({
-                        name: group.name,
-                        totalAvailable: totalAvailable / 1000, // Convert from millidollars
-                        categoryCount: group.categories.length
-                    });
+                // If specific groups are requested, only include those that are in the list
+                if (requestedGroups.length === 0) {
+                    // No groups specified - show all groups with positive amounts
+                    if (totalAvailable > 0) {
+                        summaries.push({
+                            name: group.name,
+                            totalAvailable: totalAvailable / 1000, // Convert from millidollars
+                            categoryCount: group.categories.length
+                        });
+                    }
+                } else {
+                    // Groups are specified - only show requested groups (regardless of amount)
+                    if (requestedGroups.includes(group.name)) {
+                        summaries.push({
+                            name: group.name,
+                            totalAvailable: totalAvailable / 1000, // Convert from millidollars
+                            categoryCount: group.categories.length
+                        });
+                    }
                 }
             }
         });
