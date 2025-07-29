@@ -26,8 +26,6 @@ module.exports = NodeHelper.create({
     },
 
     socketNotificationReceived: function (notification, payload) {
-        const self = this;
-        
         switch (notification) {
             case "YNAB_SET_CONFIG":
                 // Merge the configuration with defaults to ensure all properties exist
@@ -166,7 +164,7 @@ module.exports = NodeHelper.create({
             const lastTransactions = this.getLastTransactions(transactions, 10);
 
             console.log("MMM-YNAB: Sending data to frontend...");
-            self.sendSocketNotification("YNAB_UPDATE", {
+            this.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,
                 spending: spendingData,
                 groupSummaries: groupSummaries,
@@ -264,8 +262,6 @@ module.exports = NodeHelper.create({
     },
 
     getLastTransactions: function (transactions, count) {
-        const self = this;
-        
         console.log("Filtering recent transactions with config:", {
             recentExcludedCategories: this.config.recentExcludedCategories,
             recentExcludedGroups: this.config.recentExcludedGroups
@@ -392,7 +388,7 @@ module.exports = NodeHelper.create({
     },
 
     sendError: function (message) {
-        self.sendSocketNotification("YNAB_ERROR", {
+        this.sendSocketNotification("YNAB_ERROR", {
             message: message
         });
     },
