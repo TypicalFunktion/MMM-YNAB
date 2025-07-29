@@ -216,15 +216,27 @@ module.exports = NodeHelper.create({
                 transaction.payee_name.toLowerCase().includes('payroll') ||
                 transaction.payee_name.toLowerCase().includes('income') ||
                 transaction.payee_name.toLowerCase().includes('salary') ||
-                transaction.payee_name.toLowerCase().includes('paycheck')
+                transaction.payee_name.toLowerCase().includes('paycheck') ||
+                transaction.payee_name.toLowerCase().includes('refund') ||
+                transaction.payee_name.toLowerCase().includes('credit')
             )) || (transaction.memo && (
                 transaction.memo.toLowerCase().includes('deposit') ||
                 transaction.memo.toLowerCase().includes('income') ||
                 transaction.memo.toLowerCase().includes('salary') ||
-                transaction.memo.toLowerCase().includes('paycheck')
+                transaction.memo.toLowerCase().includes('paycheck') ||
+                transaction.memo.toLowerCase().includes('refund') ||
+                transaction.memo.toLowerCase().includes('credit')
             ));
             
-            if (isIncome) return false;
+            if (isIncome) {
+                console.log("MMM-YNAB: Excluding income transaction:", {
+                    date: transaction.date,
+                    payee: transaction.payee_name,
+                    memo: transaction.memo,
+                    amount: transaction.amount / 1000
+                });
+                return false;
+            }
             
             // Exclude transactions from excluded groups
             const excludedGroups = config.excludedGroups || ["Monthly Bills", "Bills", "Fixed Expenses", "Recurring Bills"];
@@ -233,6 +245,13 @@ module.exports = NodeHelper.create({
                     if (group.categories) {
                         const category = group.categories.find(cat => cat.id === transaction.category_id);
                         if (category && excludedGroups.includes(group.name)) {
+                            console.log("MMM-YNAB: Excluding bill transaction:", {
+                                date: transaction.date,
+                                payee: transaction.payee_name,
+                                category: category.name,
+                                group: group.name,
+                                amount: transaction.amount / 1000
+                            });
                             return false;
                         }
                     }
@@ -245,11 +264,23 @@ module.exports = NodeHelper.create({
                     if (group.categories) {
                         const category = group.categories.find(cat => cat.id === transaction.category_id);
                         if (category && config.excludedCategories.includes(category.name)) {
+                            console.log("MMM-YNAB: Excluding category transaction:", {
+                                date: transaction.date,
+                                payee: transaction.payee_name,
+                                category: category.name,
+                                amount: transaction.amount / 1000
+                            });
                             return false;
                         }
                     }
                 }
             }
+            
+            console.log("MMM-YNAB: Including transaction:", {
+                date: transaction.date,
+                payee: transaction.payee_name,
+                amount: transaction.amount / 1000
+            });
             
             return true;
         });
