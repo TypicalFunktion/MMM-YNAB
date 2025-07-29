@@ -202,12 +202,25 @@ module.exports = NodeHelper.create({
                 } else if (error.response.status === 404) {
                     errorMessage = "Budget not found - check your budget ID";
                 } else if (error.response.status === 429) {
-                    errorMessage = "Rate limit - waiting 10 minutes";
-                    // Set a 10-minute delay for rate limit errors
+                    // Calculate delay until top of next hour
+                    const now = new Date();
+                    const nextHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0, 0, 0);
+                    const delayMs = nextHour.getTime() - now.getTime();
+                    
+                    // Format the next attempt time
+                    const nextAttemptTime = nextHour.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    
+                    errorMessage = `Rate limit - retrying at ${nextAttemptTime}`;
+                    
+                    // Set a delay until the top of the next hour
                     setTimeout(() => {
                         console.log("MMM-YNAB: Retrying after rate limit delay...");
                         this.updateBudget();
-                    }, 600000); // 10 minutes in milliseconds
+                    }, delayMs);
                     return; // Don't send error notification, just wait
                 } else {
                     errorMessage = `YNAB API error (${error.response.status}): ${error.response.data?.error?.detail || error.response.statusText}`;
