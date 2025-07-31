@@ -385,15 +385,17 @@ module.exports = NodeHelper.create({
 
         console.log(`Filtered ${spendingTransactions.length} recent transactions from ${transactions.length} total transactions`);
 
-        // Calculate the date 3 days ago
+        // Calculate the date 3 days ago (inclusive)
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         threeDaysAgo.setHours(0, 0, 0, 0);
 
-        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()}`);
+        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()} (inclusive)`);
 
         // Filter transactions from the past 3 days
         const recentTransactions = spendingTransactions.filter(transaction => {
+            console.log(`MMM-YNAB: Processing transaction: ${transaction.payee_name} on ${transaction.date}`);
+            
             const transactionDate = new Date(transaction.date);
             // Set transaction date to beginning of day for proper comparison
             transactionDate.setHours(0, 0, 0, 0);
