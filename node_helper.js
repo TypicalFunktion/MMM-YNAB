@@ -391,29 +391,27 @@ module.exports = NodeHelper.create({
             console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date}`);
         });
 
-        // Calculate the date 3 days ago (inclusive)
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        threeDaysAgo.setHours(0, 0, 0, 0);
+        // Calculate today's date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()} (inclusive)`);
+        console.log(`MMM-YNAB: Filtering transactions from today. Date: ${today.toISOString()}`);
 
-        // Filter transactions from the past 3 days
+        // Filter transactions from today only
         const recentTransactions = spendingTransactions.filter(transaction => {
             console.log(`MMM-YNAB: Processing transaction: ${transaction.payee_name} on ${transaction.date}`);
             
             const transactionDate = new Date(transaction.date);
-            // Don't modify the transaction date, just compare the dates directly
             const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
-            const cutoffDateOnly = new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate());
+            const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             
-            const isRecent = transactionDateOnly >= cutoffDateOnly;
-            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toISOString()}) vs cutoff ${cutoffDateOnly.toISOString()} - ${isRecent ? 'INCLUDED' : 'EXCLUDED'}`);
+            const isToday = transactionDateOnly.getTime() === todayOnly.getTime();
+            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toISOString()}) vs today ${todayOnly.toISOString()} - ${isToday ? 'INCLUDED' : 'EXCLUDED'}`);
             
-            return isRecent;
+            return isToday;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
 
-        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past 3 days`);
+        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from today`);
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction

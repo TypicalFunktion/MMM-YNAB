@@ -55,22 +55,26 @@ Module.register("MMM-YNAB", {
 
     rotateTransactions: function () {
         if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-            const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
+            const visibleRows = 3; // Number of rows visible at once
+            const maxIndex = Math.max(0, this.result.lastTransactions.length - visibleRows); // Maximum index to show
             
-            // Increment the index
-            this.currentTransactionIndex = this.currentTransactionIndex + 1;
-            
-            // If we've reached the end, smoothly transition back to the beginning
-            if (this.currentTransactionIndex > maxIndex) {
-                this.currentTransactionIndex = 0;
-            }
-            
-            // Find the transactions container and animate the scroll
-            const container = document.querySelector('.ynab-transactions-container');
-            if (container) {
-                const rowHeight = 26; // Height per row (78px / 3 rows)
-                const translateY = -(this.currentTransactionIndex * rowHeight);
-                container.style.transform = `translateY(${translateY}px)`;
+            // Only animate if we have more transactions than visible rows
+            if (this.result.lastTransactions.length > visibleRows) {
+                // Increment the index
+                this.currentTransactionIndex = this.currentTransactionIndex + 1;
+                
+                // If we've reached the end, smoothly transition back to the beginning
+                if (this.currentTransactionIndex > maxIndex) {
+                    this.currentTransactionIndex = 0;
+                }
+                
+                // Find the transactions container and animate the scroll
+                const container = document.querySelector('.ynab-transactions-container');
+                if (container) {
+                    const rowHeight = 26; // Height per row (78px / 3 rows)
+                    const translateY = -(this.currentTransactionIndex * rowHeight);
+                    container.style.transform = `translateY(${translateY}px)`;
+                }
             }
         }
     },
@@ -119,13 +123,14 @@ Module.register("MMM-YNAB", {
             // Add recent transactions as sub-list
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 html += '<div class="ynab-subsection">';
-                html += '<div class="ynab-subsection-title">Past 3 Days</div>';
+                html += '<div class="ynab-subsection-title">Today</div>';
                 
                 // Create a fixed wrapper container
                 html += '<div class="ynab-transactions-wrapper">';
                 
                 // Create a container for smooth scrolling animation
-                const maxIndex = this.result.lastTransactions.length - 3; // Maximum index to show
+                const visibleRows = 3; // Number of rows visible at once
+                const maxIndex = Math.max(0, this.result.lastTransactions.length - visibleRows); // Maximum index to show
                 const clampedIndex = Math.min(this.currentTransactionIndex, maxIndex);
                 const initialTranslateY = -(clampedIndex * 26); // 26px per row
                 html += `<div class="ynab-transactions-container" style="transform: translateY(${initialTranslateY}px);">`;
