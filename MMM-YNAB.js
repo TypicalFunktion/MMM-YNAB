@@ -139,9 +139,15 @@ Module.register("MMM-YNAB", {
                 const initialTranslateY = -(clampedIndex * 26); // 26px per row
                 html += `<div class="ynab-transactions-container" style="transform: translateY(${initialTranslateY}px);">`;
                 
-                // Show all 10 transactions in the container (only 3 will be visible due to overflow)
+                // Show all transactions in the container (only 3 will be visible due to overflow)
                 this.result.lastTransactions.forEach((transaction, index) => {
-                    const transactionDate = new Date(transaction.date);
+                    // Parse the date string directly without timezone conversion (same as backend)
+                    const dateParts = transaction.date.split('-');
+                    const year = parseInt(dateParts[0]);
+                    const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+                    const day = parseInt(dateParts[2]);
+                    
+                    const transactionDate = new Date(year, month, day);
                     const formattedDate = transactionDate.toLocaleDateString('en-US', { 
                         month: 'numeric', 
                         year: '2-digit' 
