@@ -390,11 +390,21 @@ module.exports = NodeHelper.create({
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
         threeDaysAgo.setHours(0, 0, 0, 0);
 
+        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()}`);
+
         // Filter transactions from the past 3 days
         const recentTransactions = spendingTransactions.filter(transaction => {
             const transactionDate = new Date(transaction.date);
-            return transactionDate >= threeDaysAgo;
+            // Set transaction date to beginning of day for proper comparison
+            transactionDate.setHours(0, 0, 0, 0);
+            
+            const isRecent = transactionDate >= threeDaysAgo;
+            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDate.toISOString()}) - ${isRecent ? 'INCLUDED' : 'EXCLUDED'}`);
+            
+            return isRecent;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
+
+        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past 3 days`);
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction
