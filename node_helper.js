@@ -403,17 +403,22 @@ module.exports = NodeHelper.create({
         const recentTransactions = spendingTransactions.filter(transaction => {
             console.log(`MMM-YNAB: Processing transaction: ${transaction.payee_name} on ${transaction.date}`);
             
-            const transactionDate = new Date(transaction.date);
-            const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+            // Parse the date string directly without timezone conversion
+            const dateParts = transaction.date.split('-');
+            const year = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+            const day = parseInt(dateParts[2]);
+            
+            const transactionDateOnly = new Date(year, month, day);
             const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             
             console.log(`MMM-YNAB: Original transaction date: ${transaction.date}`);
-            console.log(`MMM-YNAB: Parsed transaction date: ${transactionDate.toISOString()}`);
+            console.log(`MMM-YNAB: Parsed date parts: year=${year}, month=${month}, day=${day}`);
             console.log(`MMM-YNAB: Transaction date only: ${transactionDateOnly.toDateString()}`);
             console.log(`MMM-YNAB: Today only: ${todayOnly.toDateString()}`);
             
             const isToday = transactionDateOnly.getTime() === todayOnly.getTime();
-            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toISOString()}) vs today ${todayOnly.toISOString()} - ${isToday ? 'INCLUDED' : 'EXCLUDED'}`);
+            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toDateString()}) vs today ${todayOnly.toDateString()} - ${isToday ? 'INCLUDED' : 'EXCLUDED'}`);
             
             return isToday;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
