@@ -388,7 +388,7 @@ module.exports = NodeHelper.create({
         // Debug: Show the first few transactions we're working with
         console.log("MMM-YNAB: Sample transactions before date filtering:");
         spendingTransactions.slice(0, 5).forEach((transaction, index) => {
-            console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date}`);
+            console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date} (type: ${typeof transaction.date})`);
         });
 
         // Calculate today's date
@@ -396,6 +396,8 @@ module.exports = NodeHelper.create({
         today.setHours(0, 0, 0, 0);
 
         console.log(`MMM-YNAB: Filtering transactions from today. Date: ${today.toISOString()}`);
+        console.log(`MMM-YNAB: Today's date object:`, today);
+        console.log(`MMM-YNAB: Today's date string: ${today.toDateString()}`);
 
         // Filter transactions from today only
         const recentTransactions = spendingTransactions.filter(transaction => {
@@ -404,6 +406,11 @@ module.exports = NodeHelper.create({
             const transactionDate = new Date(transaction.date);
             const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
             const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            
+            console.log(`MMM-YNAB: Original transaction date: ${transaction.date}`);
+            console.log(`MMM-YNAB: Parsed transaction date: ${transactionDate.toISOString()}`);
+            console.log(`MMM-YNAB: Transaction date only: ${transactionDateOnly.toDateString()}`);
+            console.log(`MMM-YNAB: Today only: ${todayOnly.toDateString()}`);
             
             const isToday = transactionDateOnly.getTime() === todayOnly.getTime();
             console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toISOString()}) vs today ${todayOnly.toISOString()} - ${isToday ? 'INCLUDED' : 'EXCLUDED'}`);
