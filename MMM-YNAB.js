@@ -125,9 +125,9 @@ Module.register("MMM-YNAB", {
             console.log("MMM-YNAB Frontend: lastTransactions.length =", this.result.lastTransactions ? this.result.lastTransactions.length : 'undefined');
             
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-                console.log("MMM-YNAB Frontend: Adding Today section with", this.result.lastTransactions.length, "transactions");
+                console.log("MMM-YNAB Frontend: Adding Past 3 Days section with", this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
-                html += '<div class="ynab-subsection-title">Today</div>';
+                html += '<div class="ynab-subsection-title">Past 3 Days</div>';
                 
                 // Create a fixed wrapper container
                 html += '<div class="ynab-transactions-wrapper">';

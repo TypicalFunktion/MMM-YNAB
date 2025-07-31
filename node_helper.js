@@ -399,15 +399,14 @@ module.exports = NodeHelper.create({
             console.log(`  ${date}: ${count} transactions`);
         });
 
-        // Calculate today's date
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        // Calculate the date 3 days ago (inclusive)
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        threeDaysAgo.setHours(0, 0, 0, 0);
 
-        console.log(`MMM-YNAB: Filtering transactions from today. Date: ${today.toISOString()}`);
-        console.log(`MMM-YNAB: Today's date object:`, today);
-        console.log(`MMM-YNAB: Today's date string: ${today.toDateString()}`);
+        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()}`);
 
-        // Filter transactions from today only
+        // Filter transactions from the past 3 days (inclusive)
         const recentTransactions = spendingTransactions.filter(transaction => {
             // Parse the date string directly without timezone conversion
             const dateParts = transaction.date.split('-');
@@ -416,19 +415,19 @@ module.exports = NodeHelper.create({
             const day = parseInt(dateParts[2]);
             
             const transactionDateOnly = new Date(year, month, day);
-            const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const cutoffDateOnly = new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate());
             
-            const isToday = transactionDateOnly.getTime() === todayOnly.getTime();
+            const isRecent = transactionDateOnly.getTime() >= cutoffDateOnly.getTime();
             
             // Only log if transaction is included
-            if (isToday) {
+            if (isRecent) {
                 console.log(`MMM-YNAB: INCLUDED - ${transaction.payee_name} on ${transaction.date}`);
             }
             
-            return isToday;
+            return isRecent;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
 
-        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from today`);
+        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past 3 days`);
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction
