@@ -121,7 +121,11 @@ Module.register("MMM-YNAB", {
             }
 
             // Add recent transactions as sub-list
+            console.log("MMM-YNAB Frontend: lastTransactions =", this.result.lastTransactions);
+            console.log("MMM-YNAB Frontend: lastTransactions.length =", this.result.lastTransactions ? this.result.lastTransactions.length : 'undefined');
+            
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
+                console.log("MMM-YNAB Frontend: Adding Today section with", this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
                 html += '<div class="ynab-subsection-title">Today</div>';
                 
