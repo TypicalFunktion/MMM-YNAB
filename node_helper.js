@@ -384,6 +384,12 @@ module.exports = NodeHelper.create({
         });
 
         console.log(`Filtered ${spendingTransactions.length} recent transactions from ${transactions.length} total transactions`);
+        
+        // Debug: Show the first few transactions we're working with
+        console.log("MMM-YNAB: Sample transactions before date filtering:");
+        spendingTransactions.slice(0, 5).forEach((transaction, index) => {
+            console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date}`);
+        });
 
         // Calculate the date 3 days ago (inclusive)
         const threeDaysAgo = new Date();
@@ -397,11 +403,12 @@ module.exports = NodeHelper.create({
             console.log(`MMM-YNAB: Processing transaction: ${transaction.payee_name} on ${transaction.date}`);
             
             const transactionDate = new Date(transaction.date);
-            // Set transaction date to beginning of day for proper comparison
-            transactionDate.setHours(0, 0, 0, 0);
+            // Don't modify the transaction date, just compare the dates directly
+            const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+            const cutoffDateOnly = new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate());
             
-            const isRecent = transactionDate >= threeDaysAgo;
-            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDate.toISOString()}) - ${isRecent ? 'INCLUDED' : 'EXCLUDED'}`);
+            const isRecent = transactionDateOnly >= cutoffDateOnly;
+            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toISOString()}) vs cutoff ${cutoffDateOnly.toISOString()} - ${isRecent ? 'INCLUDED' : 'EXCLUDED'}`);
             
             return isRecent;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
