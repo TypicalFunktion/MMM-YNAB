@@ -390,6 +390,14 @@ module.exports = NodeHelper.create({
         spendingTransactions.slice(0, 5).forEach((transaction, index) => {
             console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date} (type: ${typeof transaction.date})`);
         });
+        
+        // Also show all transaction dates to see what we have
+        console.log("MMM-YNAB: All transaction dates:");
+        const allDates = [...new Set(spendingTransactions.map(t => t.date))].sort();
+        allDates.forEach(date => {
+            const count = spendingTransactions.filter(t => t.date === date).length;
+            console.log(`  ${date}: ${count} transactions`);
+        });
 
         // Calculate today's date
         const today = new Date();
