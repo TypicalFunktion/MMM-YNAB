@@ -119,7 +119,7 @@ Module.register("MMM-YNAB", {
             // Add recent transactions as sub-list
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 html += '<div class="ynab-subsection">';
-                html += '<div class="ynab-subsection-title">Recent 10</div>';
+                html += '<div class="ynab-subsection-title">Past 3 Days</div>';
                 
                 // Create a fixed wrapper container
                 html += '<div class="ynab-transactions-wrapper">';

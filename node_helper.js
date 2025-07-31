@@ -316,7 +316,7 @@ module.exports = NodeHelper.create({
     },
 
     getLastTransactions: function (transactions, count) {
-        console.log("Filtering recent transactions with config:", {
+        console.log("Filtering recent transactions from past 3 days with config:", {
             recentExcludedCategories: this.config.recentExcludedCategories,
             recentExcludedGroups: this.config.recentExcludedGroups
         });
@@ -385,9 +385,16 @@ module.exports = NodeHelper.create({
 
         console.log(`Filtered ${spendingTransactions.length} recent transactions from ${transactions.length} total transactions`);
 
-        // Sort by date (most recent first) and take the specified count
-        const sortedTransactions = spendingTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
-        const recentTransactions = sortedTransactions.slice(0, count);
+        // Calculate the date 3 days ago
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        threeDaysAgo.setHours(0, 0, 0, 0);
+
+        // Filter transactions from the past 3 days
+        const recentTransactions = spendingTransactions.filter(transaction => {
+            const transactionDate = new Date(transaction.date);
+            return transactionDate >= threeDaysAgo;
+        }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction
