@@ -141,17 +141,23 @@ Module.register("MMM-YNAB", {
                 
                 // Show all transactions in the container (only 3 will be visible due to overflow)
                 this.result.lastTransactions.forEach((transaction, index) => {
+                    console.log(`MMM-YNAB Frontend: Processing transaction ${index}: ${transaction.payee} on ${transaction.date}`);
+                    
                     // Parse the date string directly without timezone conversion (same as backend)
                     const dateParts = transaction.date.split('-');
                     const year = parseInt(dateParts[0]);
                     const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
                     const day = parseInt(dateParts[2]);
                     
+                    console.log(`MMM-YNAB Frontend: Date parts: year=${year}, month=${month}, day=${day}`);
+                    
                     const transactionDate = new Date(year, month, day);
                     const formattedDate = transactionDate.toLocaleDateString('en-US', { 
                         month: 'numeric', 
                         year: '2-digit' 
                     });
+                    
+                    console.log(`MMM-YNAB Frontend: Formatted date: ${formattedDate}`);
                     
                     // Build the name span with category if available
                     let nameContent = `${formattedDate} - ${transaction.payee}`;

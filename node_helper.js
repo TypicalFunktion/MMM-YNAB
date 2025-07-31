@@ -409,8 +409,6 @@ module.exports = NodeHelper.create({
 
         // Filter transactions from today only
         const recentTransactions = spendingTransactions.filter(transaction => {
-            console.log(`MMM-YNAB: Processing transaction: ${transaction.payee_name} on ${transaction.date}`);
-            
             // Parse the date string directly without timezone conversion
             const dateParts = transaction.date.split('-');
             const year = parseInt(dateParts[0]);
@@ -420,13 +418,12 @@ module.exports = NodeHelper.create({
             const transactionDateOnly = new Date(year, month, day);
             const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             
-            console.log(`MMM-YNAB: Original transaction date: ${transaction.date}`);
-            console.log(`MMM-YNAB: Parsed date parts: year=${year}, month=${month}, day=${day}`);
-            console.log(`MMM-YNAB: Transaction date only: ${transactionDateOnly.toDateString()}`);
-            console.log(`MMM-YNAB: Today only: ${todayOnly.toDateString()}`);
-            
             const isToday = transactionDateOnly.getTime() === todayOnly.getTime();
-            console.log(`MMM-YNAB: Transaction ${transaction.payee_name} on ${transaction.date} (${transactionDateOnly.toDateString()}) vs today ${todayOnly.toDateString()} - ${isToday ? 'INCLUDED' : 'EXCLUDED'}`);
+            
+            // Only log if transaction is included
+            if (isToday) {
+                console.log(`MMM-YNAB: INCLUDED - ${transaction.payee_name} on ${transaction.date}`);
+            }
             
             return isToday;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
