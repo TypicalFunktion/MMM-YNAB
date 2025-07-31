@@ -152,10 +152,8 @@ Module.register("MMM-YNAB", {
                     console.log(`MMM-YNAB Frontend: Date parts: year=${year}, month=${month}, day=${day}`);
                     
                     const transactionDate = new Date(year, month, day);
-                    const formattedDate = transactionDate.toLocaleDateString('en-US', { 
-                        month: 'numeric', 
-                        year: '2-digit' 
-                    });
+                    // Format date directly to avoid timezone issues
+                    const formattedDate = `${month + 1}/${day}`;
                     
                     console.log(`MMM-YNAB Frontend: Formatted date: ${formattedDate}`);
                     
