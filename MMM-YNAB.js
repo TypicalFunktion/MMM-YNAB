@@ -137,7 +137,14 @@ Module.register("MMM-YNAB", {
                         month: 'numeric', 
                         year: '2-digit' 
                     });
-                    html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${formattedDate} - ${transaction.payee}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
+                    
+                    // Build the name span with category if available
+                    let nameContent = `${formattedDate} - ${transaction.payee}`;
+                    if (transaction.category) {
+                        nameContent += `<span class="ynab-category">${transaction.category}</span>`;
+                    }
+                    
+                    html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${nameContent}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
                 });
                 
                 html += '</div>';

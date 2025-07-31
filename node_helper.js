@@ -389,11 +389,23 @@ module.exports = NodeHelper.create({
         const sortedTransactions = spendingTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
         const recentTransactions = sortedTransactions.slice(0, count);
 
-        return recentTransactions.map(transaction => ({
-            payee: transaction.payee_name || 'Unknown',
-            amount: Math.abs(transaction.amount) / 1000, // Make positive for display
-            date: transaction.date
-        }));
+        return recentTransactions.map(transaction => {
+            // Find the category name for this transaction
+            let categoryName = null;
+            if (transaction.category_id) {
+                const category = this.categories.find(cat => cat.id === transaction.category_id);
+                if (category) {
+                    categoryName = category.name;
+                }
+            }
+            
+            return {
+                payee: transaction.payee_name || 'Unknown',
+                amount: Math.abs(transaction.amount) / 1000, // Make positive for display
+                date: transaction.date,
+                category: categoryName
+            };
+        });
     },
 
     calculateGroupSummaries: function (categoryGroups) {

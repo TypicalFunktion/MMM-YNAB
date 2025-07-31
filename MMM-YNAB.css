@@ -102,6 +102,13 @@
     flex: 1;
 }
 
+.module.MMM-YNAB .ynab-category {
+    color: var(--color-text-dimmed);
+    font-size: 0.6em;
+    margin-left: 8px;
+    font-weight: normal;
+}
+
 .module.MMM-YNAB .ynab-balance {
     color: #4CAF50;
     font-weight: bold;
