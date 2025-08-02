@@ -48,6 +48,7 @@ var config = {
                 showGroupSummaries: true, // Show category group totals (optional, default: true)
                 showUncleared: true, // Include uncleared transactions (optional, default: true)
                 transactionAnimationDelay: 10000, // Animation delay for recent transactions (10 seconds)
+                excludeNonBudgetAccounts: true, // Exclude tracking accounts like 401k, investment accounts, etc. (optional, default: true)
             }
         },
     ]
@@ -72,12 +73,19 @@ var config = {
 | `showGroupSummaries` | Boolean | `true` | Whether to show category group totals |
 | `showUncleared` | Boolean | `true` | Include uncleared transactions (optional, default: true) |
 | `transactionAnimationDelay` | Number | `15000` | Animation delay for recent transactions in milliseconds (15 seconds) |
+| `excludeNonBudgetAccounts` | Boolean | `true` | Exclude tracking accounts like 401k, investment accounts, etc. (optional, default: true) |
 
 ### Finding Your Budget ID
 
 By default, the first budget found in your account will be used. To specify a specific budget, use the `budgetId` config option. Find your budget ID by navigating to your budget in YNAB and looking at the URL:
 
 `https://app.youneedabudget.com/{{BUDGET_ID_AS_UUID}}/budget`
+
+### Account Filtering
+
+By default, the module excludes non-budget accounts (tracking accounts) like 401k, investment accounts, and other tracking accounts from spending calculations and recent transactions. This ensures that only transactions from your main budget accounts (checking, savings, credit cards) are included.
+
+If you want to include all account types, set `excludeNonBudgetAccounts: false` in your configuration.
 
 ## Troubleshooting
 

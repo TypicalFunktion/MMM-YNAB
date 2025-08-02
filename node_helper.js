@@ -21,6 +21,7 @@ module.exports = NodeHelper.create({
         this.config.excludedCategories = [];
         this.config.excludedGroups = [];
         this.config.showUncleared = true;
+        this.config.excludeNonBudgetAccounts = true;
         
         console.log("MMM-YNAB node helper started");
     },
@@ -35,6 +36,7 @@ module.exports = NodeHelper.create({
                     excludedCategories: [],
                     excludedGroups: [],
                     showUncleared: true,
+                    excludeNonBudgetAccounts: true,
                     ...payload
                 };
                 
@@ -136,14 +138,16 @@ module.exports = NodeHelper.create({
 
         Promise.all([
             ynabAPI.categories.getCategories(ynabBudgetId),
-            ynabAPI.transactions.getTransactions(ynabBudgetId)
+            ynabAPI.transactions.getTransactions(ynabBudgetId),
+            ynabAPI.accounts.getAccounts(ynabBudgetId)
         ])
-        .then(([categoriesResponse, transactionsResponse]) => {
+        .then(([categoriesResponse, transactionsResponse, accountsResponse]) => {
             console.log("MMM-YNAB: API calls successful, processing data...");
             const categories = categoriesResponse.data.category_groups;
             const transactions = transactionsResponse.data.transactions;
+            const accounts = accountsResponse.data.accounts;
             
-            console.log(`MMM-YNAB: Found ${categories.length} category groups and ${transactions.length} transactions`);
+            console.log(`MMM-YNAB: Found ${categories.length} category groups, ${transactions.length} transactions, and ${accounts.length} accounts`);
             
             // Store category groups for use in filtering
             this.categoryGroups = categories;
@@ -165,9 +169,28 @@ module.exports = NodeHelper.create({
                 console.log("MMM-YNAB: No matching categories found. Available categories:", allCategories.map(c => c.name));
             }
 
+            // Filter transactions based on account type if configured to exclude non-budget accounts
+            let filteredTransactions = transactions;
+            
+            if (this.config.excludeNonBudgetAccounts !== false) { // Default to true if not explicitly set to false
+                const budgetAccountIds = accounts
+                    .filter(account => account.type === 'checking' || account.type === 'savings' || account.type === 'creditCard')
+                    .map(account => account.id);
+                
+                console.log(`MMM-YNAB: Found ${budgetAccountIds.length} budget accounts out of ${accounts.length} total accounts`);
+                
+                filteredTransactions = transactions.filter(transaction => {
+                    return budgetAccountIds.includes(transaction.account_id);
+                });
+                
+                console.log(`MMM-YNAB: Filtered to ${filteredTransactions.length} budget transactions out of ${transactions.length} total transactions`);
+            } else {
+                console.log(`MMM-YNAB: Including all account types (${transactions.length} total transactions)`);
+            }
+
             // Calculate spending data
             console.log("MMM-YNAB: Calculating spending data...");
-            const spendingData = this.calculateSpending(transactions);
+            const spendingData = this.calculateSpending(filteredTransactions);
             
             // Calculate group summaries
             console.log("MMM-YNAB: Calculating group summaries...");
@@ -175,7 +198,7 @@ module.exports = NodeHelper.create({
             
             // Get last 10 transactions
             console.log("MMM-YNAB: Getting recent transactions...");
-            const lastTransactions = this.getLastTransactions(transactions, 10);
+            const lastTransactions = this.getLastTransactions(filteredTransactions, 10);
 
             console.log("MMM-YNAB: Sending data to frontend...");
             this.sendSocketNotification("YNAB_UPDATE", {

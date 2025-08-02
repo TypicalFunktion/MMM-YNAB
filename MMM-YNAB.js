@@ -18,7 +18,8 @@ Module.register("MMM-YNAB", {
         showCurrency: true,
         currencyFormat: "USD",
         showGroupSummaries: true, // Show category group totals (optional)
-        transactionAnimationDelay: 15000 // Animation delay in milliseconds (15 seconds)
+        transactionAnimationDelay: 15000, // Animation delay in milliseconds (15 seconds)
+        excludeNonBudgetAccounts: true // Exclude tracking accounts like 401k, investment accounts, etc. (default: true)
     },
 
     start: function () {
