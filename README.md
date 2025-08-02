@@ -49,6 +49,7 @@ var config = {
                 showUncleared: true, // Include uncleared transactions (optional, default: true)
                 transactionAnimationDelay: 10000, // Animation delay for recent transactions (10 seconds)
                 excludeNonBudgetAccounts: true, // Exclude tracking accounts like 401k, investment accounts, etc. (optional, default: true)
+                recentTransactionDays: 6, // Number of days to show in recent transactions (optional, default: 6)
             }
         },
     ]
@@ -74,6 +75,7 @@ var config = {
 | `showUncleared` | Boolean | `true` | Include uncleared transactions (optional, default: true) |
 | `transactionAnimationDelay` | Number | `15000` | Animation delay for recent transactions in milliseconds (15 seconds) |
 | `excludeNonBudgetAccounts` | Boolean | `true` | Exclude tracking accounts like 401k, investment accounts, etc. (optional, default: true) |
+| `recentTransactionDays` | Number | `6` | Number of days to show in recent transactions (optional, default: 6) |
 
 ### Finding Your Budget ID
 

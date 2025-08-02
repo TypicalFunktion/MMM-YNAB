@@ -22,6 +22,7 @@ module.exports = NodeHelper.create({
         this.config.excludedGroups = [];
         this.config.showUncleared = true;
         this.config.excludeNonBudgetAccounts = true;
+        this.config.recentTransactionDays = 6;
         
         console.log("MMM-YNAB node helper started");
     },
@@ -37,6 +38,7 @@ module.exports = NodeHelper.create({
                     excludedGroups: [],
                     showUncleared: true,
                     excludeNonBudgetAccounts: true,
+                    recentTransactionDays: 6,
                     ...payload
                 };
                 
@@ -339,7 +341,8 @@ module.exports = NodeHelper.create({
     },
 
     getLastTransactions: function (transactions, count) {
-        console.log("Filtering recent transactions from past 3 days with config:", {
+        const daysToShow = this.config.recentTransactionDays || 6;
+        console.log(`Filtering recent transactions from past ${daysToShow} days with config:`, {
             recentExcludedCategories: this.config.recentExcludedCategories,
             recentExcludedGroups: this.config.recentExcludedGroups
         });
@@ -422,14 +425,14 @@ module.exports = NodeHelper.create({
             console.log(`  ${date}: ${count} transactions`);
         });
 
-        // Calculate the date 3 days ago (inclusive)
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-        threeDaysAgo.setHours(0, 0, 0, 0);
+        // Calculate the date X days ago (inclusive)
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - daysToShow);
+        daysAgo.setHours(0, 0, 0, 0);
 
-        console.log(`MMM-YNAB: Filtering transactions from past 3 days. Cutoff date: ${threeDaysAgo.toISOString()}`);
+        console.log(`MMM-YNAB: Filtering transactions from past ${daysToShow} days. Cutoff date: ${daysAgo.toISOString()}`);
 
-        // Filter transactions from the past 3 days (inclusive)
+        // Filter transactions from the past X days (inclusive)
         const recentTransactions = spendingTransactions.filter(transaction => {
             // Parse the date string directly without timezone conversion
             const dateParts = transaction.date.split('-');
@@ -438,7 +441,7 @@ module.exports = NodeHelper.create({
             const day = parseInt(dateParts[2]);
             
             const transactionDateOnly = new Date(year, month, day);
-            const cutoffDateOnly = new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate());
+            const cutoffDateOnly = new Date(daysAgo.getFullYear(), daysAgo.getMonth(), daysAgo.getDate());
             
             const isRecent = transactionDateOnly.getTime() >= cutoffDateOnly.getTime();
             
@@ -450,7 +453,7 @@ module.exports = NodeHelper.create({
             return isRecent;
         }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
 
-        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past 3 days`);
+        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past ${daysToShow} days`);
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction

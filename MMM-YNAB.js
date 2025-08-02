@@ -19,7 +19,8 @@ Module.register("MMM-YNAB", {
         currencyFormat: "USD",
         showGroupSummaries: true, // Show category group totals (optional)
         transactionAnimationDelay: 15000, // Animation delay in milliseconds (15 seconds)
-        excludeNonBudgetAccounts: true // Exclude tracking accounts like 401k, investment accounts, etc. (default: true)
+        excludeNonBudgetAccounts: true, // Exclude tracking accounts like 401k, investment accounts, etc. (default: true)
+        recentTransactionDays: 6 // Number of days to show in recent transactions (default: 6)
     },
 
     start: function () {
@@ -126,9 +127,10 @@ Module.register("MMM-YNAB", {
             console.log("MMM-YNAB Frontend: lastTransactions.length =", this.result.lastTransactions ? this.result.lastTransactions.length : 'undefined');
             
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-                console.log("MMM-YNAB Frontend: Adding Past 3 Days section with", this.result.lastTransactions.length, "transactions");
+                const daysToShow = this.config.recentTransactionDays || 6;
+                console.log(`MMM-YNAB Frontend: Adding Past ${daysToShow} Days section with`, this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
-                html += '<div class="ynab-subsection-title">Past 3 Days</div>';
+                html += `<div class="ynab-subsection-title">Past ${daysToShow} Days</div>`;
                 
                 // Create a fixed wrapper container
                 html += '<div class="ynab-transactions-wrapper">';
