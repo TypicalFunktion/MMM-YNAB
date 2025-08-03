@@ -271,8 +271,7 @@ module.exports = NodeHelper.create({
         
         // Use the same rolling window as recent transactions for "This Week" if configured
         const daysToShow = this.config.recentTransactionDays || 6;
-        const startOfRecentPeriod = new Date(today);
-        startOfRecentPeriod.setDate(today.getDate() - daysToShow);
+        const startOfRecentPeriod = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToShow);
         
         // Keep the original calendar week calculation for "Last Week" comparison
         const startOfWeek = new Date(today);
@@ -326,8 +325,15 @@ module.exports = NodeHelper.create({
                 
                 // Only count non-excluded group and non-excluded category transactions
                 if (!isExcludedGroupTransaction && !isExcludedCategory) {
+                    // Parse transaction date consistently (same method as recent transactions)
+                    const dateParts = transaction.date.split('-');
+                    const year = parseInt(dateParts[0]);
+                    const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
+                    const day = parseInt(dateParts[2]);
+                    const transactionDateOnly = new Date(year, month, day);
+                    
                     // Today's spending
-                    if (transactionDate >= today) {
+                    if (transactionDateOnly >= today) {
                         todaySpending += Math.abs(transaction.amount);
                     }
                     
@@ -337,12 +343,12 @@ module.exports = NodeHelper.create({
                     
                     if (useRollingWeek) {
                         // Use rolling window to match recent transactions period
-                        if (transactionDate >= startOfRecentPeriod) {
+                        if (transactionDateOnly >= startOfRecentPeriod) {
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     } else {
                         // Use calendar week for longer periods
-                        if (transactionDate >= startOfWeek) {
+                        if (transactionDateOnly >= startOfWeek) {
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     }
@@ -500,12 +506,11 @@ module.exports = NodeHelper.create({
             console.log(`  ${date}: ${count} transactions`);
         });
 
-        // Calculate the date X days ago (inclusive)
-        const daysAgo = new Date();
-        daysAgo.setDate(daysAgo.getDate() - daysToShow);
-        daysAgo.setHours(0, 0, 0, 0);
+        // Calculate the date X days ago (inclusive) - use local date without timezone
+        const today = new Date();
+        const cutoffDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToShow);
 
-        console.log(`MMM-YNAB: Filtering transactions from past ${daysToShow} days. Cutoff date: ${daysAgo.toISOString()}`);
+        console.log(`MMM-YNAB: Filtering transactions from past ${daysToShow} days. Cutoff date: ${cutoffDate.toDateString()}`);
 
         // Filter transactions from the past X days (inclusive)
         const recentTransactions = spendingTransactions.filter(transaction => {
@@ -516,9 +521,8 @@ module.exports = NodeHelper.create({
             const day = parseInt(dateParts[2]);
             
             const transactionDateOnly = new Date(year, month, day);
-            const cutoffDateOnly = new Date(daysAgo.getFullYear(), daysAgo.getMonth(), daysAgo.getDate());
             
-            const isRecent = transactionDateOnly.getTime() >= cutoffDateOnly.getTime();
+            const isRecent = transactionDateOnly.getTime() >= cutoffDate.getTime();
             
             // Only log if transaction is included
             if (isRecent) {
@@ -526,7 +530,20 @@ module.exports = NodeHelper.create({
             }
             
             return isRecent;
-        }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date (most recent first)
+        }).sort((a, b) => {
+            // Parse dates consistently for sorting (same method as filtering)
+            const parseDate = (dateStr) => {
+                const dateParts = dateStr.split('-');
+                const year = parseInt(dateParts[0]);
+                const month = parseInt(dateParts[1]) - 1;
+                const day = parseInt(dateParts[2]);
+                return new Date(year, month, day);
+            };
+            
+            const dateA = parseDate(a.date);
+            const dateB = parseDate(b.date);
+            return dateB - dateA; // Sort by date (most recent first)
+        });
 
         console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past ${daysToShow} days`);
 
