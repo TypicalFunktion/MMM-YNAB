@@ -7,10 +7,20 @@ Module.register("MMM-YNAB", {
     defaults: {
         token: "",
         budgetId: null, // Optional: specific budget ID to use
-        categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
+        categories: [
+            "Household",
+            "Pets",
+            "Grocery",
+            "Lunch",
+            "Kids Clothes",
+            "Restaurants",
+            "Spontaneous Fun"
+        ],
         groups: [], // Optional: specific category groups to display (e.g., ["Monthly Bills", "True Expenses"])
         excludedCategories: ["Rent"], // Categories to exclude from all calculations
-        excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Category groups to exclude from all calculations
+        excludedGroups: [
+            "Monthly Bills", "Bills", "Fixed Expenses"
+        ], // Category groups to exclude from all calculations
         showUncleared: true, // Include uncleared transactions (optional, default: true)
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,
@@ -27,15 +37,14 @@ Module.register("MMM-YNAB", {
         this.currentTransactionIndex = 0;
         this.lastUpdated = null;
         this.sendSocketNotification('YNAB_SET_CONFIG', this.config);
-        
+
         // Start transaction rotation timer
         this.startTransactionRotation();
-        
+
         console.log("MMM-YNAB: Frontend started, waiting for data...");
     },
 
-    stop: function () {
-        // Clean up when module is stopped
+    stop: function () { // Clean up when module is stopped
         this.sendSocketNotification('YNAB_CLEANUP');
         this.stopTransactionRotation();
     },
@@ -56,18 +65,18 @@ Module.register("MMM-YNAB", {
     rotateTransactions: function () {
         if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
             const visibleRows = 3; // Number of rows visible at once
-            const maxIndex = Math.max(0, this.result.lastTransactions.length - visibleRows); // Maximum index to show
-            
+            const maxIndex = Math.max(0, this.result.lastTransactions.length - visibleRows);
+            // Maximum index to show
+
             // Only animate if we have more transactions than visible rows
-            if (this.result.lastTransactions.length > visibleRows) {
-                // Increment the index
+            if (this.result.lastTransactions.length > visibleRows) { // Increment the index
                 this.currentTransactionIndex = this.currentTransactionIndex + 1;
-                
+
                 // If we've reached the end, smoothly transition back to the beginning
                 if (this.currentTransactionIndex > maxIndex) {
                     this.currentTransactionIndex = 0;
                 }
-                
+
                 // Find the transactions container and animate the scroll
                 const container = document.querySelector('.ynab-transactions-container');
                 if (container) {
@@ -84,7 +93,9 @@ Module.register("MMM-YNAB", {
         wrapper.classList = ["xsmall"];
 
         if (this.error) {
-            wrapper.innerHTML = `<div class="ynab-error">Error: ${this.error}</div>`;
+            wrapper.innerHTML = `<div class="ynab-error">Error: ${
+                this.error
+            }</div>`;
             return wrapper;
         }
 
@@ -104,39 +115,48 @@ Module.register("MMM-YNAB", {
         // Add spending section if spending data is available
         if (this.result.spending) {
             html += '<div class="ynab-section">';
-            html += '<div class="ynab-section-title">DiscretionarySpending</div>';
-            
+            html += '<div class="ynab-section-title">Discretionary Spending</div>';
+
             const spending = this.result.spending;
             const formatAmount = (amount) => {
-                return this.config.showCurrency ? 
-                    `$${amount.toFixed(2)}` : 
-                    amount.toFixed(2);
+                return this.config.showCurrency ? `$${
+                    amount.toFixed(2)
+                }` : amount.toFixed(2);
             };
 
             if (spending.today > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${formatAmount(spending.today)})</span></div>`;
+                html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${
+                    formatAmount(spending.today)
+                })</span></div>`;
             }
             if (spending.yesterday > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">Yesterday</span><span class="ynab-balance spending">(${formatAmount(spending.yesterday)})</span></div>`;
+                html += `<div class="ynab-row"><span class="ynab-name">Yesterday</span><span class="ynab-balance spending">(${
+                    formatAmount(spending.yesterday)
+                })</span></div>`;
             }
 
             // Calculate and display total from displayed transactions
             const daysToShow = this.config.recentTransactionDays || 6;
             const useRollingWeek = daysToShow < 7;
-            
-            if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-                // Always sum up the displayed transactions for the total
+
+            if (this.result.lastTransactions && this.result.lastTransactions.length > 0) { // Always sum up the displayed transactions for the total
                 const transactionTotal = this.result.lastTransactions.reduce((sum, transaction) => {
                     return sum + transaction.amount;
                 }, 0);
-                
-                console.log(`MMM-YNAB Frontend: Calculated total from ${this.result.lastTransactions.length} displayed transactions: ${transactionTotal}`);
-                
+
+                console.log(`MMM-YNAB Frontend: Calculated total from ${
+                    this.result.lastTransactions.length
+                } displayed transactions: ${transactionTotal}`);
+
                 if (transactionTotal > 0) {
                     if (useRollingWeek) {
-                        html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${formatAmount(transactionTotal)})</span></div>`;
+                        html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${
+                            formatAmount(transactionTotal)
+                        })</span></div>`;
                     } else {
-                        html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(transactionTotal)})</span></div>`;
+                        html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${
+                            formatAmount(transactionTotal)
+                        })</span></div>`;
                     }
                 }
             }
@@ -144,53 +164,65 @@ Module.register("MMM-YNAB", {
             // Add recent transactions as sub-list
             console.log("MMM-YNAB Frontend: lastTransactions =", this.result.lastTransactions);
             console.log("MMM-YNAB Frontend: lastTransactions.length =", this.result.lastTransactions ? this.result.lastTransactions.length : 'undefined');
-            
+
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 console.log(`MMM-YNAB Frontend: Adding Past ${daysToShow} Days section with`, this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
                 html += `<div class="ynab-subsection-title">Past ${daysToShow} Days</div>`;
-                
+
                 // Create a fixed wrapper container
                 html += '<div class="ynab-transactions-wrapper">';
-                
+
                 // Create a container for smooth scrolling animation
                 const visibleRows = 3; // Number of rows visible at once
                 const maxIndex = Math.max(0, this.result.lastTransactions.length - visibleRows); // Maximum index to show
                 const clampedIndex = Math.min(this.currentTransactionIndex, maxIndex);
                 const initialTranslateY = -(clampedIndex * 26); // 26px per row
                 html += `<div class="ynab-transactions-container" style="transform: translateY(${initialTranslateY}px);">`;
-                
+
                 // Show all transactions in the container (only 3 will be visible due to overflow)
                 this.result.lastTransactions.forEach((transaction, index) => {
-                    console.log(`MMM-YNAB Frontend: Processing transaction ${index}: ${transaction.payee} on ${transaction.date}`);
-                    console.log(`MMM-YNAB Frontend: Transaction amount: ${transaction.amount} (raw)`);
-                    
+                    console.log(`MMM-YNAB Frontend: Processing transaction ${index}: ${
+                        transaction.payee
+                    } on ${
+                        transaction.date
+                    }`);
+                    console.log(`MMM-YNAB Frontend: Transaction amount: ${
+                        transaction.amount
+                    } (raw)`);
+
                     // Parse the date string directly without timezone conversion (same as backend)
                     const dateParts = transaction.date.split('-');
                     const year = parseInt(dateParts[0]);
                     const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
                     const day = parseInt(dateParts[2]);
-                    
+
                     console.log(`MMM-YNAB Frontend: Date parts: year=${year}, month=${month}, day=${day}`);
-                    
+
                     const transactionDate = new Date(year, month, day);
                     // Format date directly to avoid timezone issues
-                    const formattedDate = `${month + 1}/${day}`;
-                    
+                    const formattedDate = `${
+                        month + 1
+                    }/${day}`;
+
                     console.log(`MMM-YNAB Frontend: Formatted date: ${formattedDate}`);
-                    
+
                     // Build the name span with category if available
-                    let nameContent = `${formattedDate} - ${transaction.payee}`;
+                    let nameContent = `${formattedDate} - ${
+                        transaction.payee
+                    }`;
                     if (transaction.category) {
-                        nameContent += `<span class="ynab-category">${transaction.category}</span>`;
+                        nameContent += `<span class="ynab-category">${
+                            transaction.category
+                        }</span>`;
                     }
-                    
+
                     const formattedAmount = formatAmount(transaction.amount);
                     console.log(`MMM-YNAB Frontend: Formatted amount: ${formattedAmount}`);
-                    
+
                     html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${nameContent}</span><span class="ynab-balance spending">(${formattedAmount})</span></div>`;
                 });
-                
+
                 html += '</div>';
                 html += '</div>';
                 html += '</div>';
@@ -202,56 +234,61 @@ Module.register("MMM-YNAB", {
         // Add combined category balances section
         html += '<div class="ynab-section">';
         html += '<div class="ynab-section-title">Category Balances</div>';
-        
+
         const formatAmount = (amount) => {
-            return this.config.showCurrency ? 
-                `$${amount.toFixed(2)}` : 
-                amount.toFixed(2);
+            return this.config.showCurrency ? `$${
+                amount.toFixed(2)
+            }` : amount.toFixed(2);
         };
 
         // Add individual category balances first
         const sortedItems = this.result.items.sort((a, b) => a.name.localeCompare(b.name));
         const itemsHtml = sortedItems.map(item => {
             const balance = item.balance / 1000;
-            const formattedBalance = this.config.showCurrency ? 
-                `$${balance.toFixed(2)}` : 
-                balance.toFixed(2);
-            
+            const formattedBalance = this.config.showCurrency ? `$${
+                balance.toFixed(2)
+            }` : balance.toFixed(2);
+
             const balanceClass = balance < 0 ? 'ynab-balance negative' : 'ynab-balance';
-            
+
             // Get monthly spending for this category
             let monthlySpentHtml = '';
             if (this.result.monthlySpending && this.result.monthlySpending.categories) {
                 const monthlySpent = (this.result.monthlySpending.categories[item.id] || 0) / 1000;
-                const formattedMonthlySpent = this.config.showCurrency ? 
-                    `$${monthlySpent.toFixed(2)}` : 
-                    monthlySpent.toFixed(2);
-                
+                const formattedMonthlySpent = this.config.showCurrency ? `$${
+                    monthlySpent.toFixed(2)
+                }` : monthlySpent.toFixed(2);
+
                 const spentClass = monthlySpent > 0 ? 'ynab-monthly-spent' : 'ynab-monthly-spent-zero';
                 monthlySpentHtml = `<span class="${spentClass}">(${formattedMonthlySpent})</span>`;
             }
-            
-            return `<div class="ynab-row"><span class="ynab-name">${item.name}</span>${monthlySpentHtml}<span class="${balanceClass}">${formattedBalance}</span></div>`;
+
+            return `<div class="ynab-row"><span class="ynab-name">${
+                item.name
+            }</span>${monthlySpentHtml}<span class="${balanceClass}">${formattedBalance}</span></div>`;
         }).join('');
 
         html += itemsHtml;
 
         // Add group summaries at the bottom (if enabled)
         if (this.result.groupSummaries && this.result.groupSummaries.length > 0 && this.config.showGroupSummaries) {
-            this.result.groupSummaries.forEach(group => {
-                // Get monthly spending for this group
+            this.result.groupSummaries.forEach(group => { // Get monthly spending for this group
                 let monthlySpentHtml = '';
                 if (this.result.monthlySpending && this.result.monthlySpending.groups) {
                     const monthlySpent = (this.result.monthlySpending.groups[group.id] || 0) / 1000;
-                    const formattedMonthlySpent = this.config.showCurrency ? 
-                        `$${monthlySpent.toFixed(2)}` : 
-                        monthlySpent.toFixed(2);
-                    
+                    const formattedMonthlySpent = this.config.showCurrency ? `$${
+                        monthlySpent.toFixed(2)
+                    }` : monthlySpent.toFixed(2);
+
                     const spentClass = monthlySpent > 0 ? 'ynab-monthly-spent' : 'ynab-monthly-spent-zero';
                     monthlySpentHtml = `<span class="${spentClass}">(${formattedMonthlySpent})</span>`;
                 }
-                
-                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span>${monthlySpentHtml}<span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
+
+                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${
+                    group.name
+                }</span>${monthlySpentHtml}<span class="ynab-balance">${
+                    formatAmount(group.totalAvailable)
+                }</span></div>`;
             });
         }
 
@@ -282,7 +319,7 @@ Module.register("MMM-YNAB", {
 
     socketNotificationReceived: function (notification, payload) {
         console.log("MMM-YNAB notification:", notification);
-        
+
         switch (notification) {
             case "YNAB_UPDATE":
                 this.result = payload;
@@ -291,13 +328,13 @@ Module.register("MMM-YNAB", {
                 this.lastUpdated = new Date(); // Set timestamp when data is updated
                 this.updateDom(0);
                 break;
-                
+
             case "YNAB_ERROR":
                 this.error = payload.message || "Unknown error occurred";
                 this.loading = false;
                 this.updateDom(0);
                 break;
-                
+
             case "YNAB_LOADING":
                 this.loading = true;
                 this.error = null;
@@ -306,9 +343,7 @@ Module.register("MMM-YNAB", {
         }
     },
 
-    getStyles: function() {
-        return [
-            this.file('MMM-YNAB.css')
-        ];
+    getStyles: function () {
+        return [this.file('MMM-YNAB.css')];
     }
 });
