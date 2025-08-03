@@ -89,6 +89,21 @@ By default, the module excludes non-budget accounts (tracking accounts) like 401
 
 If you want to include all account types, set `excludeNonBudgetAccounts: false` in your configuration.
 
+### Monthly Spending Display
+
+The module now shows monthly spending for each category and group. The spent amount appears in red to the left of the available balance, with a smaller font size.
+
+**Example display:**
+```
+Groceries                    ($245.67)    $1,234.56
+Restaurants                  ($89.23)     $567.89
+```
+
+This helps you quickly see:
+- How much you've spent in each category this month
+- How much is still available in each category
+- Which categories you might need to adjust
+
 ### Spending Period Configuration
 
 The module automatically determines how to calculate "This Week" spending based on your `recentTransactionDays` setting:
@@ -124,6 +139,7 @@ Your YNAB API token is stored in the MagicMirror configuration file. Ensure this
 - ✅ Added automatic spending period calculation based on `recentTransactionDays`
 - ✅ Updated "This Week" label to show "Past X Days" when using rolling window mode
 - ✅ Improved spending calculation to automatically match recent transactions for periods < 7 days
+- ✅ Added monthly spending display for categories and groups (shows spent amount in red to the left of available balance)
 
 ### v1.2.1
 - ✅ Added configurable transaction animation delay (`transactionAnimationDelay`)

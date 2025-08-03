@@ -194,6 +194,10 @@ module.exports = NodeHelper.create({
             console.log("MMM-YNAB: Calculating spending data...");
             const spendingData = this.calculateSpending(filteredTransactions);
             
+            // Calculate monthly spending for categories and groups
+            console.log("MMM-YNAB: Calculating monthly spending...");
+            const monthlySpending = this.calculateMonthlySpending(filteredTransactions, filteredCategories, categories);
+            
             // Calculate group summaries
             console.log("MMM-YNAB: Calculating group summaries...");
             const groupSummaries = this.calculateGroupSummaries(categories);
@@ -206,6 +210,7 @@ module.exports = NodeHelper.create({
             this.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,
                 spending: spendingData,
+                monthlySpending: monthlySpending,
                 groupSummaries: groupSummaries,
                 lastTransactions: lastTransactions,
                 loading: false,
@@ -354,6 +359,59 @@ module.exports = NodeHelper.create({
             today: todaySpending / 1000, // Convert from millidollars
             thisWeek: thisWeekSpending / 1000,
             lastWeek: lastWeekSpending / 1000
+        };
+    },
+
+    calculateMonthlySpending: function (transactions, categories, categoryGroups) {
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        // Initialize spending tracking
+        const categorySpending = {};
+        const groupSpending = {};
+        
+        // Initialize all categories and groups with 0 spending
+        categories.forEach(category => {
+            categorySpending[category.id] = 0;
+        });
+        
+        categoryGroups.forEach(group => {
+            if (group.categories) {
+                groupSpending[group.id] = 0;
+            }
+        });
+        
+        // Calculate spending for each transaction
+        transactions.forEach(transaction => {
+            if (transaction.amount < 0 && transaction.category_id) { // Only count spending (negative amounts)
+                const transactionDate = new Date(transaction.date);
+                
+                // Check if transaction is in current month
+                if (transactionDate >= startOfMonth) {
+                    // Check if we should exclude uncleared transactions
+                    if (!this.config.showUncleared && !transaction.cleared) {
+                        return; // Skip uncleared transactions
+                    }
+                    
+                    // Find the category for this transaction
+                    const category = categories.find(cat => cat.id === transaction.category_id);
+                    if (category) {
+                        // Add to category spending
+                        categorySpending[transaction.category_id] += Math.abs(transaction.amount);
+                        
+                        // Add to group spending
+                        const group = categoryGroups.find(g => g.id === category.category_group_id);
+                        if (group) {
+                            groupSpending[category.category_group_id] += Math.abs(transaction.amount);
+                        }
+                    }
+                }
+            }
+        });
+        
+        return {
+            categories: categorySpending,
+            groups: groupSpending
         };
     },
 

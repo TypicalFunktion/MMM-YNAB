@@ -204,7 +204,18 @@ Module.register("MMM-YNAB", {
             
             const balanceClass = balance < 0 ? 'ynab-balance negative' : 'ynab-balance';
             
-            return `<div class="ynab-row"><span class="ynab-name">${item.name}</span><span class="${balanceClass}">${formattedBalance}</span></div>`;
+            // Get monthly spending for this category
+            let monthlySpentHtml = '';
+            if (this.result.monthlySpending && this.result.monthlySpending.categories && this.result.monthlySpending.categories[item.id]) {
+                const monthlySpent = this.result.monthlySpending.categories[item.id] / 1000;
+                const formattedMonthlySpent = this.config.showCurrency ? 
+                    `$${monthlySpent.toFixed(2)}` : 
+                    monthlySpent.toFixed(2);
+                
+                monthlySpentHtml = `<span class="ynab-monthly-spent">(${formattedMonthlySpent})</span>`;
+            }
+            
+            return `<div class="ynab-row"><span class="ynab-name">${item.name}</span>${monthlySpentHtml}<span class="${balanceClass}">${formattedBalance}</span></div>`;
         }).join('');
 
         html += itemsHtml;
@@ -212,7 +223,18 @@ Module.register("MMM-YNAB", {
         // Add group summaries at the bottom (if enabled)
         if (this.result.groupSummaries && this.result.groupSummaries.length > 0 && this.config.showGroupSummaries) {
             this.result.groupSummaries.forEach(group => {
-                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span><span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
+                // Get monthly spending for this group
+                let monthlySpentHtml = '';
+                if (this.result.monthlySpending && this.result.monthlySpending.groups && this.result.monthlySpending.groups[group.id]) {
+                    const monthlySpent = this.result.monthlySpending.groups[group.id] / 1000;
+                    const formattedMonthlySpent = this.config.showCurrency ? 
+                        `$${monthlySpent.toFixed(2)}` : 
+                        monthlySpent.toFixed(2);
+                    
+                    monthlySpentHtml = `<span class="ynab-monthly-spent">(${formattedMonthlySpent})</span>`;
+                }
+                
+                html += `<div class="ynab-row ynab-group"><span class="ynab-name">${group.name}</span>${monthlySpentHtml}<span class="ynab-balance">${formatAmount(group.totalAvailable)}</span></div>`;
             });
         }
 
