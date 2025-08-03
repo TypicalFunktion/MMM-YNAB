@@ -309,13 +309,27 @@ module.exports = NodeHelper.create({
                             const category = group.categories.find(cat => cat.id === transaction.category_id);
                             if (category) {
                                 transactionCategoryName = category.name;
-                                // Check if this category belongs to an excluded group
-                                if (excludedGroups.includes(group.name)) {
-                                    isExcludedGroupTransaction = true;
-                                }
-                                // Check if this category is in the excluded list
-                                if (this.config.excludedCategories && this.config.excludedCategories.includes(category.name)) {
-                                    isExcludedCategory = true;
+                                
+                                // Use different exclusion logic based on recentTransactionDays
+                                const daysToShow = this.config.recentTransactionDays || 6;
+                                const useRollingWeek = daysToShow < 7;
+                                
+                                if (useRollingWeek) {
+                                    // Use recent transaction exclusions to match exactly
+                                    if (this.config.recentExcludedGroups && this.config.recentExcludedGroups.includes(group.name)) {
+                                        isExcludedGroupTransaction = true;
+                                    }
+                                    if (this.config.recentExcludedCategories && this.config.recentExcludedCategories.includes(category.name)) {
+                                        isExcludedCategory = true;
+                                    }
+                                } else {
+                                    // Use traditional spending exclusions for calendar week
+                                    if (excludedGroups.includes(group.name)) {
+                                        isExcludedGroupTransaction = true;
+                                    }
+                                    if (this.config.excludedCategories && this.config.excludedCategories.includes(category.name)) {
+                                        isExcludedCategory = true;
+                                    }
                                 }
                                 break;
                             }
