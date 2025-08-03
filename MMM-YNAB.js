@@ -119,7 +119,14 @@ Module.register("MMM-YNAB", {
                 html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${formatAmount(spending.today)})</span></div>`;
             }
             if (spending.thisWeek > 0) {
-                html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
+                const daysToShow = this.config.recentTransactionDays || 6;
+                const useRollingWeek = daysToShow < 7;
+                
+                if (useRollingWeek) {
+                    html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
+                } else {
+                    html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
+                }
             }
 
             // Add recent transactions as sub-list

@@ -264,6 +264,12 @@ module.exports = NodeHelper.create({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
+        // Use the same rolling window as recent transactions for "This Week" if configured
+        const daysToShow = this.config.recentTransactionDays || 6;
+        const startOfRecentPeriod = new Date(today);
+        startOfRecentPeriod.setDate(today.getDate() - daysToShow);
+        
+        // Keep the original calendar week calculation for "Last Week" comparison
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay()); // Start of current week (Sunday)
         const startOfLastWeek = new Date(startOfWeek);
@@ -320,9 +326,20 @@ module.exports = NodeHelper.create({
                         todaySpending += Math.abs(transaction.amount);
                     }
                     
-                    // This week's spending
-                    if (transactionDate >= startOfWeek) {
-                        thisWeekSpending += Math.abs(transaction.amount);
+                    // This week's spending (automatically determined by recentTransactionDays)
+                    const daysToShow = this.config.recentTransactionDays || 6;
+                    const useRollingWeek = daysToShow < 7;
+                    
+                    if (useRollingWeek) {
+                        // Use rolling window to match recent transactions period
+                        if (transactionDate >= startOfRecentPeriod) {
+                            thisWeekSpending += Math.abs(transaction.amount);
+                        }
+                    } else {
+                        // Use calendar week for longer periods
+                        if (transactionDate >= startOfWeek) {
+                            thisWeekSpending += Math.abs(transaction.amount);
+                        }
                     }
                     
                     // Last week's spending

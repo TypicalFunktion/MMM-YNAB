@@ -89,6 +89,18 @@ By default, the module excludes non-budget accounts (tracking accounts) like 401
 
 If you want to include all account types, set `excludeNonBudgetAccounts: false` in your configuration.
 
+### Spending Period Configuration
+
+The module automatically determines how to calculate "This Week" spending based on your `recentTransactionDays` setting:
+
+- **If `recentTransactionDays < 7`**: Uses rolling window to match recent transactions period
+- **If `recentTransactionDays >= 7`**: Uses calendar week (Sunday to Saturday) - traditional behavior
+
+This ensures that:
+- Short periods (1-6 days) match the recent transactions display exactly
+- Longer periods (7+ days) show traditional weekly spending
+- No additional configuration needed - it's all controlled by `recentTransactionDays`
+
 ## Troubleshooting
 
 ### Common Issues
@@ -107,6 +119,11 @@ The module provides detailed logging in the MagicMirror console. Look for messag
 Your YNAB API token is stored in the MagicMirror configuration file. Ensure this file is properly secured and not shared publicly.
 
 ## Changelog
+
+### v1.2.2
+- ✅ Added automatic spending period calculation based on `recentTransactionDays`
+- ✅ Updated "This Week" label to show "Past X Days" when using rolling window mode
+- ✅ Improved spending calculation to automatically match recent transactions for periods < 7 days
 
 ### v1.2.1
 - ✅ Added configurable transaction animation delay (`transactionAnimationDelay`)

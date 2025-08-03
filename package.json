@@ -1,6 +1,6 @@
 {
   "name": "mmm-ynab",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "description": "A MagicMirror² module to display YNAB (You Need A Budget) category balances",
   "main": "MMM-YNAB.js",
   "scripts": {
