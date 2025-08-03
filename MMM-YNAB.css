@@ -137,6 +137,14 @@
     opacity: 0.8;
 }
 
+.module.MMM-YNAB .ynab-monthly-spent-zero {
+    color: #888;
+    font-size: 0.85em;
+    font-weight: 400;
+    margin-right: 8px;
+    opacity: 0.6;
+}
+
 .module.MMM-YNAB .ynab-loading {
     text-align: center;
     color: #888;
