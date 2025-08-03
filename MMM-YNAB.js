@@ -104,7 +104,7 @@ Module.register("MMM-YNAB", {
         // Add spending section if spending data is available
         if (this.result.spending) {
             html += '<div class="ynab-section">';
-            html += '<div class="ynab-section-title">Spending</div>';
+            html += '<div class="ynab-section-title">DiscretionarySpending</div>';
             
             const spending = this.result.spending;
             const formatAmount = (amount) => {
