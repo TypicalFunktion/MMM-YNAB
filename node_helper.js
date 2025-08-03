@@ -278,6 +278,7 @@ module.exports = NodeHelper.create({
         endOfLastWeek.setDate(startOfWeek.getDate() - 1);
 
         let todaySpending = 0;
+        let yesterdaySpending = 0;
         let thisWeekSpending = 0;
         let lastWeekSpending = 0;
 
@@ -337,6 +338,13 @@ module.exports = NodeHelper.create({
                         todaySpending += Math.abs(transaction.amount);
                     }
                     
+                    // Yesterday's spending
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    if (transactionDateOnly >= yesterday && transactionDateOnly < today) {
+                        yesterdaySpending += Math.abs(transaction.amount);
+                    }
+                    
                     // This week's spending (automatically determined by recentTransactionDays)
                     const daysToShow = this.config.recentTransactionDays || 6;
                     const useRollingWeek = daysToShow < 7;
@@ -363,10 +371,11 @@ module.exports = NodeHelper.create({
             }
         });
 
-        console.log(`MMM-YNAB: Spending calculation - todaySpending: ${todaySpending}, thisWeekSpending: ${thisWeekSpending}, lastWeekSpending: ${lastWeekSpending}`);
+        console.log(`MMM-YNAB: Spending calculation - todaySpending: ${todaySpending}, yesterdaySpending: ${yesterdaySpending}, thisWeekSpending: ${thisWeekSpending}, lastWeekSpending: ${lastWeekSpending}`);
 
         return {
             today: todaySpending / 1000, // Convert from millicents to dollars
+            yesterday: yesterdaySpending / 1000,
             thisWeek: thisWeekSpending / 1000,
             lastWeek: lastWeekSpending / 1000
         };

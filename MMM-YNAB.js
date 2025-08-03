@@ -116,6 +116,9 @@ Module.register("MMM-YNAB", {
             if (spending.today > 0) {
                 html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${formatAmount(spending.today)})</span></div>`;
             }
+            if (spending.yesterday > 0) {
+                html += `<div class="ynab-row"><span class="ynab-name">Yesterday</span><span class="ynab-balance spending">(${formatAmount(spending.yesterday)})</span></div>`;
+            }
 
             // Calculate and display total from displayed transactions
             const daysToShow = this.config.recentTransactionDays || 6;
