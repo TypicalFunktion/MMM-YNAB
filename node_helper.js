@@ -344,11 +344,13 @@ module.exports = NodeHelper.create({
                     if (useRollingWeek) {
                         // Use rolling window to match recent transactions period
                         if (transactionDateOnly >= startOfRecentPeriod) {
+                            console.log(`MMM-YNAB: Adding to thisWeekSpending: ${transaction.payee_name} - $${Math.abs(transaction.amount)} (${transaction.amount} raw)`);
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     } else {
                         // Use calendar week for longer periods
                         if (transactionDateOnly >= startOfWeek) {
+                            console.log(`MMM-YNAB: Adding to thisWeekSpending: ${transaction.payee_name} - $${Math.abs(transaction.amount)} (${transaction.amount} raw)`);
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     }
@@ -361,8 +363,10 @@ module.exports = NodeHelper.create({
             }
         });
 
+        console.log(`MMM-YNAB: Spending calculation - todaySpending: ${todaySpending}, thisWeekSpending: ${thisWeekSpending}, lastWeekSpending: ${lastWeekSpending}`);
+
         return {
-            today: todaySpending / 1000, // Convert from millidollars
+            today: todaySpending / 1000, // Convert from millicents to dollars
             thisWeek: thisWeekSpending / 1000,
             lastWeek: lastWeekSpending / 1000
         };
