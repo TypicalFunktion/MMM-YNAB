@@ -41,10 +41,8 @@ var config = {
                 updateInterval: 90000, // 90 seconds (optional, default: 90000)
                 showCurrency: true,    // Show $ symbol (optional, default: true)
                 currencyFormat: "USD", // Currency format (optional, default: "USD")
-                excludedCategories: ["IKEA Reimbursements", "Work Reimbursements"], // Optional: categories to exclude from spending
-                excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Optional: category groups to exclude from spending
-                recentExcludedCategories: ["Rent", "Mortgage"], // Optional: categories to exclude from recent transactions
-                recentExcludedGroups: ["Monthly Bills", "Bills"], // Optional: category groups to exclude from recent transactions
+                excludedCategories: ["IKEA Reimbursements", "Work Reimbursements", "Rent", "Mortgage"], // Optional: categories to exclude from all calculations
+                excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Optional: category groups to exclude from all calculations
                 showGroupSummaries: true, // Show category group totals (optional, default: true)
                 showUncleared: true, // Include uncleared transactions (optional, default: true)
                 transactionAnimationDelay: 10000, // Animation delay for recent transactions (10 seconds)
@@ -64,10 +62,8 @@ var config = {
 | `budgetId` | String | `null` | **Optional** Specific budget ID to use (if you have multiple budgets) |
 | `categories` | Array | `["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"]` | Array of category names to display |
 | `groups` | Array | `[]` | **Optional** Array of category group names to display (e.g., ["Monthly Bills", "True Expenses"]) |
-| `excludedCategories` | Array | `["Rent"]` | **Optional** Array of category names to exclude from spending calculations |
-| `excludedGroups` | Array | `["Monthly Bills", "Bills", "Fixed Expenses"]` | **Optional** Array of category group names to exclude from spending calculations |
-| `recentExcludedCategories` | Array | `[]` | **Optional** Array of category names to exclude from recent transactions |
-| `recentExcludedGroups` | Array | `[]` | **Optional** Array of category group names to exclude from recent transactions |
+| `excludedCategories` | Array | `["Rent"]` | **Optional** Array of category names to exclude from all calculations |
+| `excludedGroups` | Array | `["Monthly Bills", "Bills", "Fixed Expenses"]` | **Optional** Array of category group names to exclude from all calculations |
 | `updateInterval` | Number | `90000` | Update interval in milliseconds (90 seconds) |
 | `showCurrency` | Boolean | `true` | Whether to show the $ symbol before amounts |
 | `currencyFormat` | String | `"USD"` | Currency format (currently only USD is supported) |
@@ -140,6 +136,7 @@ Your YNAB API token is stored in the MagicMirror configuration file. Ensure this
 - ✅ Updated "This Week" label to show "Past X Days" when using rolling window mode
 - ✅ Improved spending calculation to automatically match recent transactions for periods < 7 days
 - ✅ Added monthly spending display for categories and groups (shows spent amount in red to the left of available balance)
+- ✅ Unified exclusion variables - now uses single `excludedCategories` and `excludedGroups` for all calculations
 
 ### v1.2.1
 - ✅ Added configurable transaction animation delay (`transactionAnimationDelay`)

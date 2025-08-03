@@ -9,10 +9,8 @@ Module.register("MMM-YNAB", {
         budgetId: null, // Optional: specific budget ID to use
         categories: ["Household", "Pets", "Grocery", "Lunch", "Kids Clothes", "Restaurants", "Spontaneous Fun"],
         groups: [], // Optional: specific category groups to display (e.g., ["Monthly Bills", "True Expenses"])
-        excludedCategories: ["Rent"], // Categories to exclude from spending calculations
-        excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Category groups to exclude from spending calculations
-        recentExcludedCategories: [], // Categories to exclude from recent transactions
-        recentExcludedGroups: [], // Category groups to exclude from recent transactions
+        excludedCategories: ["Rent"], // Categories to exclude from all calculations
+        excludedGroups: ["Monthly Bills", "Bills", "Fixed Expenses"], // Category groups to exclude from all calculations
         showUncleared: true, // Include uncleared transactions (optional, default: true)
         updateInterval: 90000, // 90 seconds, now configurable
         showCurrency: true,

@@ -16,8 +16,6 @@ module.exports = NodeHelper.create({
         this.error = null;
         
         // Initialize with defaults to prevent undefined errors
-        this.config.recentExcludedCategories = [];
-        this.config.recentExcludedGroups = [];
         this.config.excludedCategories = [];
         this.config.excludedGroups = [];
         this.config.showUncleared = true;
@@ -32,8 +30,6 @@ module.exports = NodeHelper.create({
             case "YNAB_SET_CONFIG":
                 // Merge the configuration with defaults to ensure all properties exist
                 this.config = {
-                    recentExcludedCategories: [],
-                    recentExcludedGroups: [],
                     excludedCategories: [],
                     excludedGroups: [],
                     showUncleared: true,
@@ -314,22 +310,12 @@ module.exports = NodeHelper.create({
                                 const daysToShow = this.config.recentTransactionDays || 6;
                                 const useRollingWeek = daysToShow < 7;
                                 
-                                if (useRollingWeek) {
-                                    // Use recent transaction exclusions to match exactly
-                                    if (this.config.recentExcludedGroups && this.config.recentExcludedGroups.includes(group.name)) {
-                                        isExcludedGroupTransaction = true;
-                                    }
-                                    if (this.config.recentExcludedCategories && this.config.recentExcludedCategories.includes(category.name)) {
-                                        isExcludedCategory = true;
-                                    }
-                                } else {
-                                    // Use traditional spending exclusions for calendar week
-                                    if (excludedGroups.includes(group.name)) {
-                                        isExcludedGroupTransaction = true;
-                                    }
-                                    if (this.config.excludedCategories && this.config.excludedCategories.includes(category.name)) {
-                                        isExcludedCategory = true;
-                                    }
+                                // Use unified exclusion variables for all modes
+                                if (this.config.excludedGroups && this.config.excludedGroups.includes(group.name)) {
+                                    isExcludedGroupTransaction = true;
+                                }
+                                if (this.config.excludedCategories && this.config.excludedCategories.includes(category.name)) {
+                                    isExcludedCategory = true;
                                 }
                                 break;
                             }
@@ -438,8 +424,8 @@ module.exports = NodeHelper.create({
     getLastTransactions: function (transactions, count) {
         const daysToShow = this.config.recentTransactionDays || 6;
         console.log(`Filtering recent transactions from past ${daysToShow} days with config:`, {
-            recentExcludedCategories: this.config.recentExcludedCategories,
-            recentExcludedGroups: this.config.recentExcludedGroups
+            excludedCategories: this.config.excludedCategories,
+            excludedGroups: this.config.excludedGroups
         });
 
         const spendingTransactions = transactions.filter(transaction => {
@@ -472,30 +458,30 @@ module.exports = NodeHelper.create({
                 return false;
             }
 
-            // Check if transaction belongs to excluded groups for recent transactions
+            // Check if transaction belongs to excluded groups
             let isExcludedGroupTransaction = false;
-            if (this.config.recentExcludedGroups && this.config.recentExcludedGroups.length > 0) {
+            if (this.config.excludedGroups && this.config.excludedGroups.length > 0) {
                 const categoryId = transaction.category_id;
                 if (categoryId) {
                     const category = this.categories.find(cat => cat.id === categoryId);
                     if (category) {
                         const categoryGroup = this.categoryGroups.find(group => group.id === category.category_group_id);
-                        if (categoryGroup && this.config.recentExcludedGroups.includes(categoryGroup.name)) {
-                            console.log("Excluding recent transaction from excluded group:", categoryGroup.name, transaction.payee_name);
+                        if (categoryGroup && this.config.excludedGroups.includes(categoryGroup.name)) {
+                            console.log("Excluding transaction from excluded group:", categoryGroup.name, transaction.payee_name);
                             isExcludedGroupTransaction = true;
                         }
                     }
                 }
             }
 
-            // Check if transaction belongs to excluded categories for recent transactions
+            // Check if transaction belongs to excluded categories
             let isExcludedCategory = false;
-            if (this.config.recentExcludedCategories && this.config.recentExcludedCategories.length > 0) {
+            if (this.config.excludedCategories && this.config.excludedCategories.length > 0) {
                 const categoryId = transaction.category_id;
                 if (categoryId) {
                     const category = this.categories.find(cat => cat.id === categoryId);
-                    if (category && this.config.recentExcludedCategories.includes(category.name)) {
-                        console.log("Excluding recent transaction from excluded category:", category.name, transaction.payee_name);
+                    if (category && this.config.excludedCategories.includes(category.name)) {
+                        console.log("Excluding transaction from excluded category:", category.name, transaction.payee_name);
                         isExcludedCategory = true;
                     }
                 }
