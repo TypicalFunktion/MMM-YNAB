@@ -120,6 +120,8 @@ Module.register("MMM-YNAB", {
                 const daysToShow = this.config.recentTransactionDays || 6;
                 const useRollingWeek = daysToShow < 7;
                 
+                console.log(`MMM-YNAB Frontend: Spending calculation - thisWeek: ${spending.thisWeek}, daysToShow: ${daysToShow}, useRollingWeek: ${useRollingWeek}`);
+                
                 if (useRollingWeek) {
                     html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
                 } else {
@@ -150,6 +152,7 @@ Module.register("MMM-YNAB", {
                 // Show all transactions in the container (only 3 will be visible due to overflow)
                 this.result.lastTransactions.forEach((transaction, index) => {
                     console.log(`MMM-YNAB Frontend: Processing transaction ${index}: ${transaction.payee} on ${transaction.date}`);
+                    console.log(`MMM-YNAB Frontend: Transaction amount: ${transaction.amount} (raw)`);
                     
                     // Parse the date string directly without timezone conversion (same as backend)
                     const dateParts = transaction.date.split('-');
@@ -171,7 +174,10 @@ Module.register("MMM-YNAB", {
                         nameContent += `<span class="ynab-category">${transaction.category}</span>`;
                     }
                     
-                    html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${nameContent}</span><span class="ynab-balance spending">(${formatAmount(transaction.amount)})</span></div>`;
+                    const formattedAmount = formatAmount(transaction.amount);
+                    console.log(`MMM-YNAB Frontend: Formatted amount: ${formattedAmount}`);
+                    
+                    html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${nameContent}</span><span class="ynab-balance spending">(${formattedAmount})</span></div>`;
                 });
                 
                 html += '</div>';
