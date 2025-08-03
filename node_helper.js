@@ -428,10 +428,21 @@ module.exports = NodeHelper.create({
             excludedGroups: this.config.excludedGroups
         });
 
+        console.log(`MMM-YNAB: Starting with ${transactions.length} total transactions`);
+        
         const spendingTransactions = transactions.filter(transaction => {
-            if (transaction.amount >= 0) return false; // Exclude positive amounts (income)
-            if (transaction.transfer_account_id || transaction.transfer_transaction_id) return false; // Exclude transfers
-            if (!this.config.showUncleared && !transaction.cleared) { return false; } // Exclude uncleared
+            if (transaction.amount >= 0) {
+                console.log(`MMM-YNAB: Excluding income transaction: ${transaction.payee_name} - $${transaction.amount}`);
+                return false; // Exclude positive amounts (income)
+            }
+            if (transaction.transfer_account_id || transaction.transfer_transaction_id) {
+                console.log(`MMM-YNAB: Excluding transfer transaction: ${transaction.payee_name}`);
+                return false; // Exclude transfers
+            }
+            if (!this.config.showUncleared && !transaction.cleared) {
+                console.log(`MMM-YNAB: Excluding uncleared transaction: ${transaction.payee_name}`);
+                return false; // Exclude uncleared
+            }
             
             // Check for income-related keywords in payee or memo
             const payeeLower = (transaction.payee_name || '').toLowerCase();
@@ -487,6 +498,10 @@ module.exports = NodeHelper.create({
                 }
             }
 
+            if (isExcludedGroupTransaction || isExcludedCategory) {
+                console.log(`MMM-YNAB: Excluding transaction due to exclusions: ${transaction.payee_name}`);
+            }
+            
             return !isExcludedGroupTransaction && !isExcludedCategory;
         });
 
@@ -524,9 +539,10 @@ module.exports = NodeHelper.create({
             
             const isRecent = transactionDateOnly.getTime() >= cutoffDate.getTime();
             
-            // Only log if transaction is included
             if (isRecent) {
                 console.log(`MMM-YNAB: INCLUDED - ${transaction.payee_name} on ${transaction.date}`);
+            } else {
+                console.log(`MMM-YNAB: EXCLUDED (too old) - ${transaction.payee_name} on ${transaction.date} (cutoff: ${cutoffDate.toDateString()})`);
             }
             
             return isRecent;
@@ -546,6 +562,21 @@ module.exports = NodeHelper.create({
         });
 
         console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past ${daysToShow} days`);
+        
+        // Debug: Show what transactions we found
+        if (recentTransactions.length === 0) {
+            console.log("MMM-YNAB: WARNING - No recent transactions found!");
+            console.log("MMM-YNAB: This could mean:");
+            console.log("  - No transactions in the past 2 days");
+            console.log("  - All transactions were excluded");
+            console.log("  - Date filtering is too strict");
+            console.log("  - No spending transactions (only income/transfers)");
+        } else {
+            console.log("MMM-YNAB: Recent transactions found:");
+            recentTransactions.forEach((transaction, index) => {
+                console.log(`  ${index + 1}. ${transaction.payee} - $${transaction.amount} on ${transaction.date}`);
+            });
+        }
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction
