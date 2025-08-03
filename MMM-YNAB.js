@@ -116,27 +116,6 @@ Module.register("MMM-YNAB", {
             if (spending.today > 0) {
                 html += `<div class="ynab-row"><span class="ynab-name">Today</span><span class="ynab-balance spending">(${formatAmount(spending.today)})</span></div>`;
             }
-            // Calculate total from displayed transactions when using rolling window
-            const daysToShow = this.config.recentTransactionDays || 6;
-            const useRollingWeek = daysToShow < 7;
-            
-            if (useRollingWeek && this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-                // Sum up the displayed transactions
-                const transactionTotal = this.result.lastTransactions.reduce((sum, transaction) => {
-                    return sum + transaction.amount;
-                }, 0);
-                
-                console.log(`MMM-YNAB Frontend: Calculated total from ${this.result.lastTransactions.length} displayed transactions: ${transactionTotal}`);
-                
-                if (transactionTotal > 0) {
-                    html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${formatAmount(transactionTotal)})</span></div>`;
-                }
-            } else if (spending.thisWeek > 0) {
-                // Use backend calculation for calendar week
-                console.log(`MMM-YNAB Frontend: Using backend calculation for calendar week - thisWeek: ${spending.thisWeek}, daysToShow: ${daysToShow}, useRollingWeek: ${useRollingWeek}`);
-                
-                html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
-            }
 
             // Add recent transactions as sub-list
             console.log("MMM-YNAB Frontend: lastTransactions =", this.result.lastTransactions);
@@ -144,6 +123,27 @@ Module.register("MMM-YNAB", {
             
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
                 const daysToShow = this.config.recentTransactionDays || 6;
+                const useRollingWeek = daysToShow < 7;
+                
+                // Calculate total from displayed transactions when using rolling window
+                if (useRollingWeek) {
+                    // Sum up the displayed transactions
+                    const transactionTotal = this.result.lastTransactions.reduce((sum, transaction) => {
+                        return sum + transaction.amount;
+                    }, 0);
+                    
+                    console.log(`MMM-YNAB Frontend: Calculated total from ${this.result.lastTransactions.length} displayed transactions: ${transactionTotal}`);
+                    
+                    if (transactionTotal > 0) {
+                        html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${formatAmount(transactionTotal)})</span></div>`;
+                    }
+                } else if (spending.thisWeek > 0) {
+                    // Use backend calculation for calendar week
+                    console.log(`MMM-YNAB Frontend: Using backend calculation for calendar week - thisWeek: ${spending.thisWeek}, daysToShow: ${daysToShow}, useRollingWeek: ${useRollingWeek}`);
+                    
+                    html += `<div class="ynab-row"><span class="ynab-name">This Week</span><span class="ynab-balance spending">(${formatAmount(spending.thisWeek)})</span></div>`;
+                }
+                
                 console.log(`MMM-YNAB Frontend: Adding Past ${daysToShow} Days section with`, this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
                 html += `<div class="ynab-subsection-title">Past ${daysToShow} Days</div>`;
