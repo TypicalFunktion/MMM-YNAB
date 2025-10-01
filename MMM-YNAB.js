@@ -40,8 +40,6 @@ Module.register("MMM-YNAB", {
 
         // Start transaction rotation timer
         this.startTransactionRotation();
-
-        console.log("MMM-YNAB: Frontend started, waiting for data...");
     },
 
     stop: function () { // Clean up when module is stopped
@@ -144,10 +142,6 @@ Module.register("MMM-YNAB", {
                     return sum + transaction.amount;
                 }, 0);
 
-                console.log(`MMM-YNAB Frontend: Calculated total from ${
-                    this.result.lastTransactions.length
-                } displayed transactions: ${transactionTotal}`);
-
                 if (transactionTotal > 0) {
                     if (useRollingWeek) {
                         html += `<div class="ynab-row"><span class="ynab-name">Past ${daysToShow} Days</span><span class="ynab-balance spending">(${
@@ -162,11 +156,7 @@ Module.register("MMM-YNAB", {
             }
 
             // Add recent transactions as sub-list
-            console.log("MMM-YNAB Frontend: lastTransactions =", this.result.lastTransactions);
-            console.log("MMM-YNAB Frontend: lastTransactions.length =", this.result.lastTransactions ? this.result.lastTransactions.length : 'undefined');
-
             if (this.result.lastTransactions && this.result.lastTransactions.length > 0) {
-                console.log(`MMM-YNAB Frontend: Adding Past ${daysToShow} Days section with`, this.result.lastTransactions.length, "transactions");
                 html += '<div class="ynab-subsection">';
                 html += `<div class="ynab-subsection-title">Past ${daysToShow} Days</div>`;
 
@@ -182,30 +172,17 @@ Module.register("MMM-YNAB", {
 
                 // Show all transactions in the container (only 3 will be visible due to overflow)
                 this.result.lastTransactions.forEach((transaction, index) => {
-                    console.log(`MMM-YNAB Frontend: Processing transaction ${index}: ${
-                        transaction.payee
-                    } on ${
-                        transaction.date
-                    }`);
-                    console.log(`MMM-YNAB Frontend: Transaction amount: ${
-                        transaction.amount
-                    } (raw)`);
-
                     // Parse the date string directly without timezone conversion (same as backend)
                     const dateParts = transaction.date.split('-');
                     const year = parseInt(dateParts[0]);
                     const month = parseInt(dateParts[1]) - 1; // Month is 0-indexed
                     const day = parseInt(dateParts[2]);
 
-                    console.log(`MMM-YNAB Frontend: Date parts: year=${year}, month=${month}, day=${day}`);
-
                     const transactionDate = new Date(year, month, day);
                     // Format date directly to avoid timezone issues
                     const formattedDate = `${
                         month + 1
                     }/${day}`;
-
-                    console.log(`MMM-YNAB Frontend: Formatted date: ${formattedDate}`);
 
                     // Build the name span with category if available
                     let nameContent = `${formattedDate} - ${
@@ -218,7 +195,6 @@ Module.register("MMM-YNAB", {
                     }
 
                     const formattedAmount = formatAmount(transaction.amount);
-                    console.log(`MMM-YNAB Frontend: Formatted amount: ${formattedAmount}`);
 
                     html += `<div class="ynab-row ynab-sub" data-index="${index}"><span class="ynab-name">${nameContent}</span><span class="ynab-balance spending">(${formattedAmount})</span></div>`;
                 });
@@ -318,8 +294,6 @@ Module.register("MMM-YNAB", {
     },
 
     socketNotificationReceived: function (notification, payload) {
-        console.log("MMM-YNAB notification:", notification);
-
         switch (notification) {
             case "YNAB_UPDATE":
                 this.result = payload;

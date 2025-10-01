@@ -21,8 +21,6 @@ module.exports = NodeHelper.create({
         this.config.showUncleared = true;
         this.config.excludeNonBudgetAccounts = true;
         this.config.recentTransactionDays = 6;
-        
-        console.log("MMM-YNAB node helper started");
     },
 
     socketNotificationReceived: function (notification, payload) {
@@ -38,8 +36,6 @@ module.exports = NodeHelper.create({
                     ...payload
                 };
                 
-                console.log("MMM-YNAB config received:", this.config);
-                
                 // Initialize the budget
                 this.initializeBudget();
                 break;
@@ -50,37 +46,28 @@ module.exports = NodeHelper.create({
     },
 
     initializeBudget: function () {
-        console.log("MMM-YNAB: Starting budget initialization...");
-        
         if (!this.config.token) {
-            console.log("MMM-YNAB: No token provided");
             this.sendError("YNAB token is required");
             return;
         }
 
-        console.log("MMM-YNAB: Creating YNAB API instance...");
         const ynabAPI = new ynab.API(this.config.token);
 
         if (this.config.budgetId) {
-            console.log(`MMM-YNAB: Using provided budget ID: ${this.config.budgetId}`);
             ynabBudgetId = this.config.budgetId;
             this.updateBudget();
             this.setInterval();
             return;
         }
 
-        console.log("MMM-YNAB: No budget ID provided, fetching first available budget...");
         // Get first budget if no specific budget ID provided
         ynabAPI.budgets.getBudgets()
             .then(budgetsResponse => {
-                console.log(`MMM-YNAB: Found ${budgetsResponse.data.budgets.length} budgets`);
-                
                 if (!budgetsResponse.data.budgets || budgetsResponse.data.budgets.length === 0) {
                     throw new Error("No budgets found in YNAB account");
                 }
                 
                 ynabBudgetId = budgetsResponse.data.budgets[0].id;
-                console.log(`MMM-YNAB: Using first budget: ${ynabBudgetId}`);
                 
                 this.updateBudget();
                 this.setInterval();
@@ -117,21 +104,16 @@ module.exports = NodeHelper.create({
     },
 
     updateBudget: function () {
-        console.log("MMM-YNAB: Starting updateBudget...");
-        
         if (!ynabBudgetId) {
-            console.log("MMM-YNAB: No budget ID available");
             this.sendError("No budget ID available");
             return;
         }
 
         if (!this.config.token) {
-            console.log("MMM-YNAB: No token available");
             this.sendError("YNAB token is required");
             return;
         }
 
-        console.log("MMM-YNAB: Making API calls to YNAB...");
         const ynabAPI = new ynab.API(this.config.token);
 
         Promise.all([
@@ -140,12 +122,9 @@ module.exports = NodeHelper.create({
             ynabAPI.accounts.getAccounts(ynabBudgetId)
         ])
         .then(([categoriesResponse, transactionsResponse, accountsResponse]) => {
-            console.log("MMM-YNAB: API calls successful, processing data...");
             const categories = categoriesResponse.data.category_groups;
             const transactions = transactionsResponse.data.transactions;
             const accounts = accountsResponse.data.accounts;
-            
-            console.log(`MMM-YNAB: Found ${categories.length} category groups, ${transactions.length} transactions, and ${accounts.length} accounts`);
             
             // Store category groups for use in filtering
             this.categoryGroups = categories;
@@ -154,18 +133,10 @@ module.exports = NodeHelper.create({
             const allCategories = categories.flatMap(group => group.categories);
             this.categories = allCategories;
             
-            console.log(`MMM-YNAB: Total categories available: ${allCategories.length}`);
-            
             // Filter categories based on config
             const filteredCategories = allCategories.filter(category => {
                 return this.config.categories.includes(category.name);
             });
-
-            console.log(`MMM-YNAB: Filtered to ${filteredCategories.length} categories`);
-
-            if (filteredCategories.length === 0) {
-                console.log("MMM-YNAB: No matching categories found. Available categories:", allCategories.map(c => c.name));
-            }
 
             // Filter transactions based on account type if configured to exclude non-budget accounts
             let filteredTransactions = transactions;
@@ -175,34 +146,23 @@ module.exports = NodeHelper.create({
                     .filter(account => account.type === 'checking' || account.type === 'savings' || account.type === 'creditCard')
                     .map(account => account.id);
                 
-                console.log(`MMM-YNAB: Found ${budgetAccountIds.length} budget accounts out of ${accounts.length} total accounts`);
-                
                 filteredTransactions = transactions.filter(transaction => {
                     return budgetAccountIds.includes(transaction.account_id);
                 });
-                
-                console.log(`MMM-YNAB: Filtered to ${filteredTransactions.length} budget transactions out of ${transactions.length} total transactions`);
-            } else {
-                console.log(`MMM-YNAB: Including all account types (${transactions.length} total transactions)`);
             }
 
             // Calculate spending data
-            console.log("MMM-YNAB: Calculating spending data...");
             const spendingData = this.calculateSpending(filteredTransactions);
             
             // Calculate monthly spending for categories and groups
-            console.log("MMM-YNAB: Calculating monthly spending...");
             const monthlySpending = this.calculateMonthlySpending(filteredTransactions, filteredCategories, categories);
             
             // Calculate group summaries
-            console.log("MMM-YNAB: Calculating group summaries...");
             const groupSummaries = this.calculateGroupSummaries(categories);
             
             // Get last 10 transactions
-            console.log("MMM-YNAB: Getting recent transactions...");
             const lastTransactions = this.getLastTransactions(filteredTransactions, 10);
 
-            console.log("MMM-YNAB: Sending data to frontend...");
             this.sendSocketNotification("YNAB_UPDATE", {
                 items: filteredCategories,
                 spending: spendingData,
@@ -212,8 +172,6 @@ module.exports = NodeHelper.create({
                 loading: false,
                 error: null
             });
-            
-            console.log("MMM-YNAB: Update complete!");
         })
         .catch(error => {
             console.error("MMM-YNAB: Error in updateBudget:", error);
@@ -352,13 +310,11 @@ module.exports = NodeHelper.create({
                     if (useRollingWeek) {
                         // Use rolling window to match recent transactions period
                         if (transactionDateOnly >= startOfRecentPeriod) {
-                            console.log(`MMM-YNAB: Adding to thisWeekSpending: ${transaction.payee_name} - $${Math.abs(transaction.amount)} (${transaction.amount} raw)`);
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     } else {
                         // Use calendar week for longer periods
                         if (transactionDateOnly >= startOfWeek) {
-                            console.log(`MMM-YNAB: Adding to thisWeekSpending: ${transaction.payee_name} - $${Math.abs(transaction.amount)} (${transaction.amount} raw)`);
                             thisWeekSpending += Math.abs(transaction.amount);
                         }
                     }
@@ -370,8 +326,6 @@ module.exports = NodeHelper.create({
                 }
             }
         });
-
-        console.log(`MMM-YNAB: Spending calculation - todaySpending: ${todaySpending}, yesterdaySpending: ${yesterdaySpending}, thisWeekSpending: ${thisWeekSpending}, lastWeekSpending: ${lastWeekSpending}`);
 
         return {
             today: todaySpending / 1000, // Convert from millicents to dollars
@@ -436,24 +390,15 @@ module.exports = NodeHelper.create({
 
     getLastTransactions: function (transactions, count) {
         const daysToShow = this.config.recentTransactionDays || 6;
-        console.log(`Filtering recent transactions from past ${daysToShow} days with config:`, {
-            excludedCategories: this.config.excludedCategories,
-            excludedGroups: this.config.excludedGroups
-        });
-
-        console.log(`MMM-YNAB: Starting with ${transactions.length} total transactions`);
         
         const spendingTransactions = transactions.filter(transaction => {
             if (transaction.amount >= 0) {
-                console.log(`MMM-YNAB: Excluding income transaction: ${transaction.payee_name} - $${transaction.amount}`);
                 return false; // Exclude positive amounts (income)
             }
             if (transaction.transfer_account_id || transaction.transfer_transaction_id) {
-                console.log(`MMM-YNAB: Excluding transfer transaction: ${transaction.payee_name}`);
                 return false; // Exclude transfers
             }
             if (!this.config.showUncleared && !transaction.cleared) {
-                console.log(`MMM-YNAB: Excluding uncleared transaction: ${transaction.payee_name}`);
                 return false; // Exclude uncleared
             }
             
@@ -478,7 +423,6 @@ module.exports = NodeHelper.create({
                            memoLower.includes('credit');
             
             if (isIncome) {
-                console.log("Excluding income transaction:", transaction.payee_name, transaction.memo);
                 return false;
             }
 
@@ -491,7 +435,6 @@ module.exports = NodeHelper.create({
                     if (category) {
                         const categoryGroup = this.categoryGroups.find(group => group.id === category.category_group_id);
                         if (categoryGroup && this.config.excludedGroups.includes(categoryGroup.name)) {
-                            console.log("Excluding transaction from excluded group:", categoryGroup.name, transaction.payee_name);
                             isExcludedGroupTransaction = true;
                         }
                     }
@@ -505,40 +448,17 @@ module.exports = NodeHelper.create({
                 if (categoryId) {
                     const category = this.categories.find(cat => cat.id === categoryId);
                     if (category && this.config.excludedCategories.includes(category.name)) {
-                        console.log("Excluding transaction from excluded category:", category.name, transaction.payee_name);
                         isExcludedCategory = true;
                     }
                 }
-            }
-
-            if (isExcludedGroupTransaction || isExcludedCategory) {
-                console.log(`MMM-YNAB: Excluding transaction due to exclusions: ${transaction.payee_name}`);
             }
             
             return !isExcludedGroupTransaction && !isExcludedCategory;
         });
 
-        console.log(`Filtered ${spendingTransactions.length} recent transactions from ${transactions.length} total transactions`);
-        
-        // Debug: Show the first few transactions we're working with
-        console.log("MMM-YNAB: Sample transactions before date filtering:");
-        spendingTransactions.slice(0, 5).forEach((transaction, index) => {
-            console.log(`  ${index + 1}. ${transaction.payee_name} on ${transaction.date} (type: ${typeof transaction.date})`);
-        });
-        
-        // Also show all transaction dates to see what we have
-        console.log("MMM-YNAB: All transaction dates:");
-        const allDates = [...new Set(spendingTransactions.map(t => t.date))].sort();
-        allDates.forEach(date => {
-            const count = spendingTransactions.filter(t => t.date === date).length;
-            console.log(`  ${date}: ${count} transactions`);
-        });
-
         // Calculate the date X days ago (inclusive) - use local date without timezone
         const today = new Date();
         const cutoffDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysToShow);
-
-        console.log(`MMM-YNAB: Filtering transactions from past ${daysToShow} days. Cutoff date: ${cutoffDate.toDateString()}`);
 
         // Filter transactions from the past X days (inclusive)
         const recentTransactions = spendingTransactions.filter(transaction => {
@@ -551,12 +471,6 @@ module.exports = NodeHelper.create({
             const transactionDateOnly = new Date(year, month, day);
             
             const isRecent = transactionDateOnly.getTime() >= cutoffDate.getTime();
-            
-            if (isRecent) {
-                console.log(`MMM-YNAB: INCLUDED - ${transaction.payee_name} on ${transaction.date}`);
-            } else {
-                console.log(`MMM-YNAB: EXCLUDED (too old) - ${transaction.payee_name} on ${transaction.date} (cutoff: ${cutoffDate.toDateString()})`);
-            }
             
             return isRecent;
         }).sort((a, b) => {
@@ -573,23 +487,6 @@ module.exports = NodeHelper.create({
             const dateB = parseDate(b.date);
             return dateB - dateA; // Sort by date (most recent first)
         });
-
-        console.log(`MMM-YNAB: Found ${recentTransactions.length} transactions from past ${daysToShow} days`);
-        
-        // Debug: Show what transactions we found
-        if (recentTransactions.length === 0) {
-            console.log("MMM-YNAB: WARNING - No recent transactions found!");
-            console.log("MMM-YNAB: This could mean:");
-            console.log("  - No transactions in the past 2 days");
-            console.log("  - All transactions were excluded");
-            console.log("  - Date filtering is too strict");
-            console.log("  - No spending transactions (only income/transfers)");
-        } else {
-            console.log("MMM-YNAB: Recent transactions found:");
-            recentTransactions.forEach((transaction, index) => {
-                console.log(`  ${index + 1}. ${transaction.payee} - $${transaction.amount} on ${transaction.date}`);
-            });
-        }
 
         return recentTransactions.map(transaction => {
             // Find the category name for this transaction
